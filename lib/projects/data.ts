@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createProjectInput, type CreateProjectInput, type Project } from "@/lib/projects/schema";
+import { createProjectInput, project, type CreateProjectInput, type Project } from "@/lib/projects/schema";
 
 export async function listProjects(): Promise<Project[]> {
   const supabase = await createClient();
@@ -7,8 +7,8 @@ export async function listProjects(): Promise<Project[]> {
     .from("projects")
     .select("*")
     .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return data as Project[];
+  if (error) throw new Error(error.message, { cause: error });
+  return data;
 }
 
 export async function createProject(input: CreateProjectInput): Promise<Project> {
@@ -25,6 +25,6 @@ export async function createProject(input: CreateProjectInput): Promise<Project>
     .insert({ title: parsed.title, status: parsed.status, owner_id: user.id })
     .select("*")
     .single();
-  if (error) throw new Error(error.message);
-  return data as Project;
+  if (error) throw new Error(error.message, { cause: error });
+  return project.parse(data);
 }

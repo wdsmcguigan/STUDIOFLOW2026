@@ -6,14 +6,15 @@ const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const service = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 async function makeUser(email: string) {
+  const password = globalThis.crypto.randomUUID();
   const admin = createClient(url, service, { auth: { persistSession: false } });
   await admin.auth.admin.createUser({
     email,
-    password: "password123",
+    password,
     email_confirm: true,
   });
   const client = createClient(url, anon, { auth: { persistSession: false } });
-  await client.auth.signInWithPassword({ email, password: "password123" });
+  await client.auth.signInWithPassword({ email, password });
   return client;
 }
 
@@ -21,6 +22,7 @@ describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("projects RLS", () => {
   let alice: Awaited<ReturnType<typeof makeUser>>;
   let bob: Awaited<ReturnType<typeof makeUser>>;
 
+  // Users are intentionally not cleaned up; this test targets a local, disposable Supabase instance.
   beforeAll(async () => {
     alice = await makeUser(`alice-${Date.now()}@test.dev`);
     bob = await makeUser(`bob-${Date.now()}@test.dev`);

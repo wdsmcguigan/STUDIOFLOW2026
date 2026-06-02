@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StudioFlow — On-Set Mobile Surface</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--font-display:'Bricolage Grotesque',sans-serif;--font-ui:'Hanken Grotesk',system-ui,sans-serif;--font-mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0907;color:#eef1f5;font-family:var(--font-ui);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;padding:18px 14px 70px}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+h1.page{font-family:var(--font-display);font-weight:800;font-size:25px;letter-spacing:-.5px;margin-bottom:5px}
+.kicker{font-size:11px;letter-spacing:1.8px;text-transform:uppercase;font-weight:800;margin-bottom:9px;background:linear-gradient(110deg,#f4a93c,#4fe0a0 45%,#b073f0);-webkit-background-clip:text;background-clip:text;color:transparent}
+p.lede{color:rgba(238,241,245,.5);font-size:13px;margin-bottom:14px;line-height:1.55}
+p.lede b{color:rgba(238,241,245,.8)}
+.sectitle{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:rgba(238,241,245,.4);font-weight:700;margin:24px 2px 13px;display:flex;align-items:center;gap:9px}
+.sectitle::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.09)}
+.rowwrap{display:flex;flex-wrap:wrap;gap:18px;justify-content:center}
+
+/* phone */
+.phone{width:320px;max-width:100%;border-radius:34px;padding:8px;background:#000;border:1px solid rgba(255,255,255,.12);box-shadow:0 30px 70px rgba(0,0,0,.6);flex:none}
+.screen{border-radius:27px;overflow:hidden;background:var(--bg);position:relative}
+.screen::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:8;opacity:var(--grain);mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.cap{text-align:center;font-size:11px;color:rgba(238,241,245,.45);margin-top:9px;font-weight:600}
+
+.sbar{display:flex;align-items:center;justify-content:space-between;padding:9px 18px 4px;font-size:11px;font-weight:700;color:var(--tx)}
+.sbar .ic{display:flex;gap:5px;opacity:.8}
+.sbar svg{width:14px;height:14px}
+
+/* header */
+.hdr{padding:8px 18px 16px;position:relative}
+.hdr .eye{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--brand-on,var(--brand))}
+.hdr h1{font-family:var(--font-display);font-weight:800;font-size:27px;letter-spacing:-.5px;color:var(--tx);margin-top:2px}
+.hdr .sub{font-size:12px;color:var(--tx-3);margin-top:3px}
+.hdr::after{content:"";position:absolute;left:18px;width:46px;bottom:9px;height:2px;border-radius:2px;background:var(--brand);box-shadow:0 0 9px var(--brand)}
+
+.body{padding:4px 14px 14px}
+/* call card */
+.callcard{display:flex;align-items:center;background:var(--s2);border:1px solid var(--line);border-radius:16px;padding:14px 15px;margin-bottom:7px}
+.callcard .lbl{font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--tx-3)}
+.callcard .big{font-family:var(--font-mono);font-weight:700;font-size:30px;color:var(--brand);letter-spacing:-1px;line-height:1.05}
+.callcard .who{font-size:11px;color:var(--tx-2);margin-top:1px}
+.callcard .sun{margin-left:auto;text-align:right;font-size:10.5px;color:var(--tx-3);line-height:1.7}
+.callcard .sun b{font-family:var(--font-mono);color:var(--tx-2);font-weight:600}
+
+.mlabel{font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--tx-3);margin:15px 4px 8px;display:flex;align-items:center;gap:7px}
+.mlabel .ct{margin-left:auto;font-family:var(--font-mono);color:var(--tx-2);letter-spacing:0}
+
+/* schedule strip */
+.mstrip{display:flex;align-items:center;gap:11px;background:var(--s2);border:1px solid var(--line);border-left:4px solid var(--cat,#7fb0ff);border-radius:12px;padding:11px 12px;margin-bottom:8px;position:relative}
+.mstrip .time{font-family:var(--font-mono);font-weight:700;font-size:14px;color:var(--tx);width:46px}
+.mstrip .meta{flex:1;min-width:0}
+.mstrip .meta b{font-size:13px;color:var(--tx);font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mstrip .meta small{font-size:10.5px;color:var(--tx-3);font-family:var(--font-mono)}
+.mstrip .chev{color:var(--tx-3)}
+.mstrip.now{border-left-color:var(--brand);box-shadow:0 0 0 1px var(--brand-line) inset}
+.mstrip.now .tagn{position:absolute;top:-8px;left:12px;font-size:8.5px;font-weight:800;letter-spacing:.6px;background:var(--brand);color:var(--brand-ink);border-radius:20px;padding:2px 8px;text-transform:uppercase}
+/* AI-flagged strip */
+.mstrip.airow{border-left-color:transparent;box-shadow:var(--ai-shadow)}
+.mstrip.airow::before{content:"";position:absolute;left:-1px;top:-1px;bottom:-1px;width:4px;border-radius:12px 0 0 12px;background:var(--ai-grad)}
+
+.move{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px dashed var(--line-2);border-radius:12px;margin-bottom:8px;color:var(--tx-2);font-size:12px;font-weight:600}
+.move .mt{margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--tx-3)}
+
+/* AI dock */
+.aidock{display:flex;align-items:flex-start;gap:11px;padding:13px;border-radius:14px;margin:6px 0 4px;
+  background:var(--ai-glass) padding-box, var(--ai-grad) border-box;border:1px solid transparent;
+  -webkit-backdrop-filter:blur(12px) saturate(135%);backdrop-filter:blur(12px) saturate(135%);box-shadow:var(--ai-shadow)}
+.aidock .gdot{width:11px;height:11px;border-radius:50%;background:var(--ai-grad);box-shadow:0 0 5px var(--ai-glow-out);flex:none;margin-top:3px}
+.aidock .c{flex:1}
+.aidock .c p{font-size:12px;color:var(--tx);line-height:1.4}.aidock .c p b{font-weight:700}
+.aidock .acts{display:flex;gap:7px;margin-top:9px}
+.aidock .acts .y{font-size:11px;font-weight:800;color:var(--ai-ink);border-radius:9px;padding:7px 13px;background:transparent padding-box,var(--ai-grad) border-box;border:1px solid transparent}
+.aidock .acts .n{font-size:11px;font-weight:700;color:var(--tx-3);padding:7px 6px}
+
+/* contacts (call sheet screen) */
+.contact{display:flex;align-items:center;gap:11px;background:var(--s2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:7px}
+.contact .av{width:36px;height:36px;border-radius:10px;background:var(--s3);display:grid;place-items:center;font-family:var(--font-mono);font-weight:700;font-size:12px;color:var(--brand);flex:none}
+.contact .nm{flex:1}.contact .nm b{font-size:12.5px;color:var(--tx);display:block}.contact .nm small{font-size:10.5px;color:var(--tx-3)}
+.contact .call{width:34px;height:34px;border-radius:50%;background:var(--brand-soft);border:1px solid var(--brand-line);display:grid;place-items:center;color:var(--brand)}
+.weatherrow{display:flex;gap:8px;margin-bottom:8px}
+.wx{flex:1;background:var(--s2);border:1px solid var(--line);border-radius:12px;padding:11px;text-align:center}
+.wx .v{font-family:var(--font-mono);font-size:17px;font-weight:700;color:var(--tx)}
+.wx .k{font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--tx-3);font-weight:700;margin-top:2px}
+
+/* bottom tabs + fab */
+.tabs{display:flex;border-top:1px solid var(--line);background:var(--s1);position:relative}
+.tabs a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 13px;color:var(--tx-3);font-size:9.5px;font-weight:700;text-decoration:none}
+.tabs a.on{color:var(--brand)}
+.tabs a svg{width:21px;height:21px}
+.fab{position:absolute;right:14px;top:-26px;width:52px;height:52px;border-radius:50%;
+  background:var(--s2) padding-box, var(--ai-grad) border-box;border:2px solid transparent;
+  display:grid;place-items:center;box-shadow:var(--ai-shadow), 0 8px 20px rgba(0,0,0,.4)}
+.fab .gdot{width:13px;height:13px;border-radius:50%;background:var(--ai-grad);box-shadow:0 0 8px var(--ai-glow-out)}
+svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.note{color:rgba(238,241,245,.42);font-size:12px;line-height:1.65;margin-top:22px;border-top:1px solid rgba(255,255,255,.08);padding-top:16px}
+.note b{color:rgba(238,241,245,.64)}
+
+.dk{--bg:#14110c;--s1:#1a1610;--s2:#221c14;--s3:#2c2418;--line:rgba(255,236,205,.08);--line-2:rgba(255,236,205,.14);
+  --tx:#f3ece1;--tx-2:rgba(243,236,225,.62);--tx-3:rgba(243,236,225,.42);
+  --brand:#f4a93c;--brand-2:#e07a3a;--brand-ink:#1d1303;--brand-soft:rgba(244,169,60,.16);--brand-line:rgba(244,169,60,.36);--grain:.5;
+  --ai-grad:linear-gradient(120deg,#4fe0a0 0%,#56cf94 30%,#6fb0cf 52%,#8a8ee8 74%,#b073f0 100%);
+  --ai-ink:#9fe0c0;--ai-glass:rgba(40,50,50,.5);--ai-glow-out:rgba(110,200,180,.5);
+  --ai-glow-in:rgba(150,128,228,.12);--ai-glow-halo:rgba(165,108,235,.11);
+  --ai-shadow:inset 0 0 13px var(--ai-glow-in), 0 0 12px var(--ai-glow-halo), inset 0 1px 0 rgba(255,255,255,.06)}
+.lt{--bg:#efe7d8;--s1:#f8f1e4;--s2:#fcf7ee;--s3:#eadfcc;--line:rgba(64,46,24,.1);--line-2:rgba(64,46,24,.15);
+  --tx:#2d2418;--tx-2:rgba(45,36,24,.62);--tx-3:rgba(45,36,24,.42);
+  --brand:#bf6a2e;--brand-2:#d98a3f;--brand-ink:#fff;--brand-on:#a4541d;--brand-soft:rgba(191,106,46,.14);--brand-line:rgba(191,106,46,.34);--grain:.28;
+  --ai-grad:linear-gradient(120deg,#2f9e6e 0%,#3f9e82 28%,#5a89c0 56%,#7a64c8 78%,#9a47c0 100%);
+  --ai-ink:#3f8a6a;--ai-glass:rgba(255,255,255,.55);--ai-glow-out:rgba(80,150,120,.5);
+  --ai-glow-in:rgba(120,80,195,.10);--ai-glow-halo:rgba(140,72,200,.09);
+  --ai-shadow:inset 0 0 12px var(--ai-glow-in), 0 0 10px var(--ai-glow-halo), inset 0 1px 0 rgba(255,255,255,.55)}
+</style>
+</head>
+<body>
+
+<div class="kicker">StudioFlow · on-set surface</div>
+<h1 class="page">The day, in your pocket</h1>
+<p class="lede">A separate <b>on-set</b> surface — not a shrunk desktop. Glanceable call time, sun &amp; weather, today's strips, one-tap contacts, and AI only when it earns its place (weather/schedule shifts). Big targets, high contrast, same data graph as the desktop. Umber dark is default; Kraft light is there for reading in direct sun.</p>
+
+<div class="sectitle">Today — Umber (default)</div>
+<div class="rowwrap">
+
+  <!-- TODAY (dark) -->
+  <div>
+  <div class="phone"><div class="screen dk">
+    <div class="sbar"><span class="mono">7:04</span><span class="ic"><svg viewBox="0 0 24 24"><path d="M2 8a15 15 0 0120 0M5 12a10 10 0 0114 0M8.5 15.5a5 5 0 017 0"/><circle cx="12" cy="19" r="1"/></svg><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg></span></div>
+    <div class="hdr"><div class="eye">Shoot Day 4 of 28</div><h1>Mon · Oct 14</h1><div class="sub">NIGHTHAWK · Stage B → Harbor Rd</div></div>
+    <div class="body">
+      <div class="callcard"><div><div class="lbl">Your call</div><div class="big">06:30</div><div class="who">Camera · B-cam op</div></div><div class="sun"><span>Sunrise <b>07:14</b></span><br><span>Sunset <b>18:42</b></span></div></div>
+      <div class="mlabel">Schedule <span class="ct">8h 12m</span></div>
+      <div class="mstrip now"><span class="tagn">Now</span><span class="time">07:00</span><div class="meta"><b>Kitchen — morning after</b><small>Sc 24 · INT/D · 6/8</small></div><svg class="chev" width="16" height="16" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
+      <div class="mstrip" style="--cat:#6aa9e0"><span class="time">09:15</span><div class="meta"><b>Hallway confrontation</b><small>Sc 25 · INT/N · 1 2/8</small></div><svg class="chev" width="16" height="16" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
+      <div class="move"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M3 12h18M14 5l7 7-7 7"/></svg>Company move → Harbor Rd<span class="mt">~45m</span></div>
+      <div class="mstrip airow"><span class="time">13:00</span><div class="meta"><b>Rooftop chase</b><small>Sc 26 · EXT/N · 3/8</small></div><svg class="chev" width="16" height="16" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
+      <div class="aidock"><span class="gdot"></span><div class="c"><p><b>Rain likely 15:00–17:00.</b> Sc 26 is EXT — move it ahead of the company move while it's dry?</p><div class="acts"><span class="y">See plan</span><span class="n">Dismiss</span></div></div></div>
+    </div>
+    <div class="tabs">
+      <a class="on" href="#"><svg viewBox="0 0 24 24"><path d="M4 12l8-8 8 8"/><path d="M6 10v9h12v-9"/></svg>Today</a>
+      <a href="#"><svg viewBox="0 0 24 24"><path d="M5 3h14v18l-7-4-7 4z"/></svg>Call Sheet</a>
+      <a href="#"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Schedule</a>
+      <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>Crew</a>
+      <div class="fab"><span class="gdot"></span></div>
+    </div>
+  </div></div>
+  <div class="cap">Today · weather-aware AI</div>
+  </div>
+
+  <!-- CALL SHEET (dark) -->
+  <div>
+  <div class="phone"><div class="screen dk">
+    <div class="sbar"><span class="mono">7:05</span><span class="ic"><svg viewBox="0 0 24 24"><path d="M2 8a15 15 0 0120 0M5 12a10 10 0 0114 0M8.5 15.5a5 5 0 017 0"/><circle cx="12" cy="19" r="1"/></svg><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg></span></div>
+    <div class="hdr"><div class="eye">Call Sheet · Day 4</div><h1>Harbor Rd</h1><div class="sub">123 Harbor Rd · Parking: Lot C</div></div>
+    <div class="body">
+      <div class="weatherrow"><div class="wx"><div class="v">14°</div><div class="k">High</div></div><div class="wx"><div class="v">60%</div><div class="k">Rain pm</div></div><div class="wx"><div class="v">SW 12</div><div class="k">Wind</div></div></div>
+      <div class="mlabel">Department calls</div>
+      <div class="mstrip" style="--cat:#e0a04a"><span class="time">06:00</span><div class="meta"><b>Camera + G&amp;E</b><small>Pre-light Stage B</small></div></div>
+      <div class="mstrip" style="--cat:#5fb87a"><span class="time">06:30</span><div class="meta"><b>Cast · Hair/Makeup</b><small>Trailer 2</small></div></div>
+      <div class="mstrip" style="--cat:#6aa9e0"><span class="time">08:00</span><div class="meta"><b>General crew call</b><small>On set</small></div></div>
+      <div class="mlabel">Key contacts</div>
+      <div class="contact"><div class="av">JD</div><div class="nm"><b>Jordan Diaz</b><small>1st AD</small></div><div class="call"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M5 4h4l2 5-3 2a11 11 0 005 5l2-3 5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></svg></div></div>
+      <div class="contact"><div class="av">MK</div><div class="nm"><b>Mara Kessler</b><small>UPM</small></div><div class="call"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M5 4h4l2 5-3 2a11 11 0 005 5l2-3 5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></svg></div></div>
+    </div>
+    <div class="tabs">
+      <a href="#"><svg viewBox="0 0 24 24"><path d="M4 12l8-8 8 8"/><path d="M6 10v9h12v-9"/></svg>Today</a>
+      <a class="on" href="#"><svg viewBox="0 0 24 24"><path d="M5 3h14v18l-7-4-7 4z"/></svg>Call Sheet</a>
+      <a href="#"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Schedule</a>
+      <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>Crew</a>
+      <div class="fab"><span class="gdot"></span></div>
+    </div>
+  </div></div>
+  <div class="cap">Call Sheet · one-tap contacts</div>
+  </div>
+
+</div>
+
+<div class="sectitle">Today — Kraft (daylight / direct sun)</div>
+<div class="rowwrap">
+  <div>
+  <div class="phone"><div class="screen lt">
+    <div class="sbar"><span class="mono">7:04</span><span class="ic"><svg viewBox="0 0 24 24"><path d="M2 8a15 15 0 0120 0M5 12a10 10 0 0114 0M8.5 15.5a5 5 0 017 0"/><circle cx="12" cy="19" r="1"/></svg><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg></span></div>
+    <div class="hdr"><div class="eye">Shoot Day 4 of 28</div><h1>Mon · Oct 14</h1><div class="sub">NIGHTHAWK · Stage B → Harbor Rd</div></div>
+    <div class="body">
+      <div class="callcard"><div><div class="lbl">Your call</div><div class="big">06:30</div><div class="who">Camera · B-cam op</div></div><div class="sun"><span>Sunrise <b>07:14</b></span><br><span>Sunset <b>18:42</b></span></div></div>
+      <div class="mlabel">Schedule <span class="ct">8h 12m</span></div>
+      <div class="mstrip now"><span class="tagn">Now</span><span class="time">07:00</span><div class="meta"><b>Kitchen — morning after</b><small>Sc 24 · INT/D · 6/8</small></div><svg class="chev" width="16" height="16" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
+      <div class="mstrip" style="--cat:#4f80a8"><span class="time">09:15</span><div class="meta"><b>Hallway confrontation</b><small>Sc 25 · INT/N · 1 2/8</small></div><svg class="chev" width="16" height="16" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
+      <div class="move"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M3 12h18M14 5l7 7-7 7"/></svg>Company move → Harbor Rd<span class="mt">~45m</span></div>
+      <div class="mstrip airow"><span class="time">13:00</span><div class="meta"><b>Rooftop chase</b><small>Sc 26 · EXT/N · 3/8</small></div><svg class="chev" width="16" height="16" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
+      <div class="aidock"><span class="gdot"></span><div class="c"><p><b>Rain likely 15:00–17:00.</b> Sc 26 is EXT — move it ahead of the company move while it's dry?</p><div class="acts"><span class="y">See plan</span><span class="n">Dismiss</span></div></div></div>
+    </div>
+    <div class="tabs">
+      <a class="on" href="#"><svg viewBox="0 0 24 24"><path d="M4 12l8-8 8 8"/><path d="M6 10v9h12v-9"/></svg>Today</a>
+      <a href="#"><svg viewBox="0 0 24 24"><path d="M5 3h14v18l-7-4-7 4z"/></svg>Call Sheet</a>
+      <a href="#"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Schedule</a>
+      <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>Crew</a>
+      <div class="fab"><span class="gdot"></span></div>
+    </div>
+  </div></div>
+  <div class="cap">Same screen · Kraft light</div>
+  </div>
+</div>
+
+<div class="note"><b>How it relates to desktop:</b> same production graph, different surface. The phone exposes the on-set slice of full capability — your call, the day's strips, call sheet, contacts, and weather-aware AI nudges — with the gradient AI dot/dock and amber filament carried straight over. The floating gradient-ringed button is the AI assistant (⌘K's mobile cousin). Want me to draw the <b>Schedule</b> tab (full-day strip list / swipe-to-reschedule) or a <b>scene detail</b> sheet next, or wire the foundation tokens into the codebase?</div>
+
+</body>
+</html>

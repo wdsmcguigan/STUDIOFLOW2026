@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StudioFlow — Sage→Amethyst AI (subtle)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--font-display:'Bricolage Grotesque',sans-serif;--font-ui:'Hanken Grotesk',system-ui,sans-serif;--font-mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0907;color:#eef1f5;font-family:var(--font-ui);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;padding:18px 14px 70px}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+h1.page{font-family:var(--font-display);font-weight:800;font-size:25px;letter-spacing:-.5px;margin-bottom:5px}
+.kicker{font-size:11px;letter-spacing:1.8px;text-transform:uppercase;font-weight:800;margin-bottom:9px;background:linear-gradient(110deg,#f4a93c,#4fe0a0 45%,#b073f0);-webkit-background-clip:text;background-clip:text;color:transparent}
+p.lede{color:rgba(238,241,245,.5);font-size:13px;margin-bottom:6px;line-height:1.55}
+p.lede b{color:rgba(238,241,245,.78)}
+.sectitle{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:rgba(238,241,245,.4);font-weight:700;margin:26px 2px 13px;display:flex;align-items:center;gap:9px}
+.sectitle::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.09)}
+
+.frame{border-radius:18px;overflow:hidden;margin-bottom:16px;border:1px solid var(--line-2);box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.barlabel{padding:9px 13px;font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
+.barlabel .pill{font-size:9px;font-weight:800;letter-spacing:.5px;padding:2px 8px;border-radius:20px;background:var(--brand-soft);color:var(--brand-on,var(--brand));border:1px solid var(--brand-line)}
+.shell{display:flex;min-height:286px;background:var(--bg);position:relative}
+.shell::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:5;opacity:var(--grain,.5);mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+.rail{width:158px;flex:none;background:var(--s1);border-right:1px solid var(--line);padding:13px 11px;display:flex;flex-direction:column;gap:3px}
+.brandmark{display:flex;align-items:center;gap:9px;margin-bottom:6px;padding:2px 4px 11px;border-bottom:1px solid var(--line);position:relative}
+.brandmark .gl{width:26px;height:26px;border-radius:8px;background:linear-gradient(140deg,var(--brand),var(--brand-2,var(--brand)));display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:13px;color:var(--brand-ink);box-shadow:0 4px 14px var(--brand-soft)}
+.brandmark .wm{font-family:var(--font-display);font-weight:800;font-size:14.5px;letter-spacing:-.3px;color:var(--tx)}
+.brandmark::after{content:"";position:absolute;left:4px;right:4px;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--brand),transparent);box-shadow:0 0 8px var(--brand);opacity:.9}
+.grp{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--tx-3);margin:11px 6px 4px}
+.nav{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;font-size:12px;font-weight:600;color:var(--tx-2);position:relative}
+.nav svg{width:15px;height:15px;flex:none}
+.nav.on{color:var(--brand-on,var(--brand));background:var(--brand-soft)}
+.nav.on::before{content:"";position:absolute;left:-11px;top:6px;bottom:6px;width:3px;border-radius:0 3px 3px 0;background:var(--brand);box-shadow:0 0 9px var(--brand)}
+.nav.ai-nav{color:var(--ai-ink)}
+
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.top{display:flex;align-items:center;gap:10px;padding:13px 14px;border-bottom:1px solid var(--line)}
+.top h2{font-family:var(--font-display);font-weight:800;font-size:17px;letter-spacing:-.3px;color:var(--tx)}
+.top .sub{font-size:10.5px;color:var(--tx-3);margin-top:1px}
+.spacer{flex:1}
+.primary{background:var(--brand);color:var(--brand-ink);border:0;border-radius:9px;padding:8px 13px;font-weight:800;font-size:12px;font-family:var(--font-ui);display:flex;align-items:center;gap:6px;box-shadow:0 5px 14px var(--brand-soft)}
+
+.gdot{width:7px;height:7px;border-radius:50%;background:var(--ai-grad);box-shadow:0 0 4px var(--ai-glow-out);flex:none}
+.aichip{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:var(--ai-ink);border-radius:20px;padding:5px 11px;
+  background:var(--ai-glass) padding-box, var(--ai-grad) border-box;border:1px solid transparent;
+  -webkit-backdrop-filter:blur(8px) saturate(130%);backdrop-filter:blur(8px) saturate(130%);box-shadow:var(--ai-shadow-sm)}
+.aibar{margin:2px 14px 14px;display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;
+  background:var(--ai-glass) padding-box, var(--ai-grad) border-box;border:1px solid transparent;
+  -webkit-backdrop-filter:blur(12px) saturate(135%);backdrop-filter:blur(12px) saturate(135%);box-shadow:var(--ai-shadow)}
+.aibar .gdot{width:10px;height:10px}
+.aibar .tx{flex:1;font-size:11.5px;color:var(--tx);line-height:1.35}.aibar .tx b{font-weight:700}
+.aibar .dismiss{font-size:9.5px;font-weight:700;color:var(--tx-3);padding:5px 4px}
+.aibar .go{font-size:9.5px;font-weight:800;color:var(--ai-ink);border-radius:8px;padding:5px 11px;background:transparent padding-box, var(--ai-grad) border-box;border:1px solid transparent}
+
+.board{padding:12px 14px;display:flex;flex-direction:column;gap:7px}
+.row{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--line);border-left:3px solid var(--cat,#7fb0ff);border-radius:9px;padding:9px 11px;position:relative}
+.row.airow{border-left-color:transparent;background:var(--ai-glass) padding-box, transparent;-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);box-shadow:var(--ai-shadow)}
+.row.airow::before{content:"";position:absolute;left:-1px;top:-1px;bottom:-1px;width:3px;border-radius:9px 0 0 9px;background:var(--ai-grad)}
+.row .sc{font-family:var(--font-mono);font-weight:700;font-size:12px;color:var(--tx)}
+.row .ie{font-size:8.5px;font-weight:700;color:var(--tx-2);letter-spacing:.4px;width:34px}
+.row .syn{flex:1;font-size:12px;color:var(--tx);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .pg{font-family:var(--font-mono);font-size:10.5px;color:var(--tx-3)}
+svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+.detail{border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px;background:var(--bg);position:relative;overflow:hidden;margin-bottom:8px}
+.detail::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n2)'/%3E%3C/svg%3E")}
+.opt{font-size:9.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#caa471;margin:0 0 7px 2px}
+.dock{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;margin-bottom:13px;position:relative;
+  background:rgba(40,50,50,.5) padding-box, linear-gradient(120deg,#4fe0a0,#56cf94 30%,#6fb0cf 52%,#8a8ee8 74%,#b073f0 100%) border-box;border:1px solid transparent;
+  -webkit-backdrop-filter:blur(12px) saturate(135%);backdrop-filter:blur(12px) saturate(135%)}
+.dock .gdot{width:10px;height:10px;border-radius:50%;background:linear-gradient(120deg,#4fe0a0,#8a8ee8 65%,#b073f0);flex:none}
+.dock .tx{flex:1;font-size:11.5px;color:#f3ece1}.dock .tx b{font-weight:700}
+.dock .go{font-size:9.5px;font-weight:800;color:#9fe0c0;border-radius:8px;padding:5px 11px;background:transparent padding-box,linear-gradient(120deg,#4fe0a0,#b073f0) border-box;border:1px solid transparent}
+.swatchbar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:2px 2px 6px;border:1px solid rgba(255,255,255,.12)}
+.swatchbar i{flex:1}
+.swlabels{display:flex;justify-content:space-between;font-size:9px;color:rgba(238,241,245,.4);margin:0 4px 14px;font-weight:700;letter-spacing:.3px}
+.note{color:rgba(238,241,245,.42);font-size:12px;line-height:1.65;margin-top:14px;border-top:1px solid rgba(255,255,255,.08);padding-top:16px}
+.note b{color:rgba(238,241,245,.64)}
+
+.dk{--bg:#14110c;--s1:#1a1610;--s2:#221c14;--s3:#2c2418;--line:rgba(255,236,205,.08);--line-2:rgba(255,236,205,.14);
+  --tx:#f3ece1;--tx-2:rgba(243,236,225,.62);--tx-3:rgba(243,236,225,.42);
+  --brand:#f4a93c;--brand-2:#e07a3a;--brand-ink:#1d1303;--brand-soft:rgba(244,169,60,.16);--brand-line:rgba(244,169,60,.36);
+  --grain:.55;
+  --ai-grad:linear-gradient(120deg,#4fe0a0 0%,#56cf94 30%,#6fb0cf 52%,#8a8ee8 74%,#b073f0 100%);
+  --ai-ink:#9fe0c0;--ai-glass:rgba(40,50,50,.5);--ai-glow-out:rgba(110,200,180,.5);--ai-glow-in:rgba(120,205,180,.10);
+  --ai-shadow:inset 0 0 14px var(--ai-glow-in), inset 0 1px 0 rgba(255,255,255,.06);
+  --ai-shadow-sm:inset 0 0 9px var(--ai-glow-in)}
+.lt{--bg:#efe7d8;--s1:#f8f1e4;--s2:#fcf7ee;--s3:#eadfcc;--line:rgba(64,46,24,.1);--line-2:rgba(64,46,24,.15);
+  --tx:#2d2418;--tx-2:rgba(45,36,24,.62);--tx-3:rgba(45,36,24,.42);
+  --brand:#bf6a2e;--brand-2:#d98a3f;--brand-ink:#fff;--brand-on:#a4541d;--brand-soft:rgba(191,106,46,.14);--brand-line:rgba(191,106,46,.34);
+  --grain:.3;
+  --ai-grad:linear-gradient(120deg,#2f9e6e 0%,#3f9e82 28%,#5a89c0 56%,#7a64c8 78%,#9a47c0 100%);
+  --ai-ink:#3f8a6a;--ai-glass:rgba(255,255,255,.55);--ai-glow-out:rgba(80,150,120,.5);--ai-glow-in:rgba(70,140,110,.08);
+  --ai-shadow:inset 0 0 12px var(--ai-glow-in), inset 0 1px 0 rgba(255,255,255,.55);
+  --ai-shadow-sm:inset 0 0 8px var(--ai-glow-in)}
+.lt .barlabel{color:#7a5a30}.dk .barlabel{color:#caa471}
+</style>
+</head>
+<body>
+
+<div class="kicker">Tungsten &amp; Sage · sage→amethyst AI</div>
+<h1 class="page">Green leads, amethyst returns</h1>
+<p class="lede">Rebalanced: sage/phosphor still opens the gradient, but amethyst now owns the back third and lands on a richer violet — so both colours are clearly there. And the inner glow is dialled down to <b>barely perceptible</b> — just enough to feel lit, not enough to notice.</p>
+
+<div class="swatchbar"><i style="background:#4fe0a0"></i><i style="background:#56cf94"></i><i style="background:#6fb0cf"></i><i style="background:#8a8ee8"></i><i style="background:#9b7ff0"></i><i style="background:#b073f0"></i></div>
+<div class="swlabels"><span>SAGE / PHOSPHOR</span><span>AMETHYST</span></div>
+
+<div class="sectitle">Glow placement — your call (all barely-there now)</div>
+<div class="detail dk">
+  <div class="opt">1 · Inner glow only</div>
+  <div class="dock" style="box-shadow:inset 0 0 14px rgba(120,205,180,.11), inset 0 1px 0 rgba(255,255,255,.06)"><span class="gdot"></span><div class="tx">Detected prop <b>“antique revolver”</b> in Sc 25 — add to Props?</div><span class="go">Review</span></div>
+  <div class="opt">2 · Inner + a faint outer halo</div>
+  <div class="dock" style="box-shadow:inset 0 0 11px rgba(120,205,180,.09), 0 0 10px rgba(140,150,220,.07), inset 0 1px 0 rgba(255,255,255,.06)"><span class="gdot"></span><div class="tx">Detected prop <b>“antique revolver”</b> in Sc 25 — add to Props?</div><span class="go">Review</span></div>
+  <div class="opt">3 · Outer glow only</div>
+  <div class="dock" style="box-shadow:0 0 12px rgba(130,160,210,.10), inset 0 1px 0 rgba(255,255,255,.06)"><span class="gdot"></span><div class="tx">Detected prop <b>“antique revolver”</b> in Sc 25 — add to Props?</div><span class="go">Review</span></div>
+</div>
+
+<div class="sectitle">The pair — inner glow</div>
+
+<!-- DARK -->
+<div class="frame dk">
+  <div class="barlabel">Umber · dark<span class="pill">Default</span></div>
+  <div class="shell">
+    <div class="rail">
+      <div class="brandmark"><div class="gl">SF</div><div class="wm">StudioFlow</div></div>
+      <div class="grp">Develop</div>
+      <div class="nav"><svg viewBox="0 0 24 24"><path d="M5 3h14v18l-7-4-7 4z"/></svg>Script</div>
+      <div class="nav on"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div>
+      <div class="nav ai-nav"><span class="gdot"></span>AI Assistant</div>
+      <div class="grp">Plan</div>
+      <div class="nav"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Schedule</div>
+      <div class="nav"><svg viewBox="0 0 24 24"><path d="M12 2v20M5 7h9a3 3 0 010 6H5"/></svg>Budget</div>
+    </div>
+    <div class="main">
+      <div class="top"><div><h2>Breakdown</h2><div class="sub">NIGHTHAWK · 48 scenes</div></div><div class="spacer"></div><div class="aichip"><span class="gdot"></span>4 AI insights</div><button class="primary"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+      <div class="board">
+        <div class="row" style="--cat:#e0a04a"><span class="sc">24</span><span class="ie">INT/D</span><span class="syn">Kitchen — the morning after</span><span class="pg">6/8</span></div>
+        <div class="row airow"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn">Hallway confrontation</span><span class="pg">1 2/8</span></div>
+        <div class="row" style="--cat:#6aa9e0"><span class="sc">26</span><span class="ie">EXT/N</span><span class="syn">Rooftop chase</span><span class="pg">3/8</span></div>
+      </div>
+      <div class="aibar"><span class="gdot"></span><div class="tx">Detected prop <b>“antique revolver”</b> in Sc 25 — add to Props &amp; flag armourer?</div><span class="dismiss">Dismiss</span><span class="go">Review</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHT -->
+<div class="frame lt">
+  <div class="barlabel">Kraft · light<span class="pill">Daylight</span></div>
+  <div class="shell">
+    <div class="rail">
+      <div class="brandmark"><div class="gl">SF</div><div class="wm">StudioFlow</div></div>
+      <div class="grp">Develop</div>
+      <div class="nav"><svg viewBox="0 0 24 24"><path d="M5 3h14v18l-7-4-7 4z"/></svg>Script</div>
+      <div class="nav on"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div>
+      <div class="nav ai-nav"><span class="gdot"></span>AI Assistant</div>
+      <div class="grp">Plan</div>
+      <div class="nav"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Schedule</div>
+      <div class="nav"><svg viewBox="0 0 24 24"><path d="M12 2v20M5 7h9a3 3 0 010 6H5"/></svg>Budget</div>
+    </div>
+    <div class="main">
+      <div class="top"><div><h2>Breakdown</h2><div class="sub">NIGHTHAWK · 48 scenes</div></div><div class="spacer"></div><div class="aichip"><span class="gdot"></span>4 AI insights</div><button class="primary"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+      <div class="board">
+        <div class="row" style="--cat:#c2873a"><span class="sc">24</span><span class="ie">INT/D</span><span class="syn">Kitchen — the morning after</span><span class="pg">6/8</span></div>
+        <div class="row airow"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn">Hallway confrontation</span><span class="pg">1 2/8</span></div>
+        <div class="row" style="--cat:#4f80a8"><span class="sc">26</span><span class="ie">EXT/N</span><span class="syn">Rooftop chase</span><span class="pg">3/8</span></div>
+      </div>
+      <div class="aibar"><span class="gdot"></span><div class="tx">Detected prop <b>“antique revolver”</b> in Sc 25 — add to Props &amp; flag armourer?</div><span class="dismiss">Dismiss</span><span class="go">Review</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="note"><b>Both colours read now</b> — sage opens it, amethyst closes it — and the glow is a barely-there interior sheen rather than a light source. If the violet still wants to be a touch stronger (or the glow even fainter / a hair more), say so and I'll nudge the one number. Otherwise: <b>(1)</b> glow 1/2/3, <b>(2)</b> flat vs ember-duotone logo → lock + spec.</div>
+
+</body>
+</html>

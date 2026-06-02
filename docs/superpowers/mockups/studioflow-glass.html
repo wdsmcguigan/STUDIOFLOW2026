@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StudioFlow — Glassmorphism Depth Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--font-display:'Bricolage Grotesque',sans-serif;--font-ui:'Hanken Grotesk',system-ui,sans-serif;--font-mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#06070a;color:#eef1f5;font-family:var(--font-ui);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;padding:18px 14px 70px}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+h1.page{font-family:var(--font-display);font-weight:800;font-size:25px;letter-spacing:-.5px;margin-bottom:5px}
+p.lede{color:rgba(238,241,245,.48);font-size:13px;margin-bottom:6px;line-height:1.5}
+.sectitle{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:rgba(238,241,245,.4);font-weight:700;margin:24px 2px 12px;display:flex;align-items:center;gap:9px}
+.sectitle::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.09)}
+
+.card{border-radius:20px;overflow:hidden;margin-bottom:18px;border:1px solid rgba(255,255,255,.1);box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.caption{padding:13px 15px;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.07)}
+.caption .nm{font-family:var(--font-display);font-weight:800;font-size:18px;letter-spacing:-.3px;display:flex;align-items:center;gap:9px}
+.caption .nm .chip{width:12px;height:12px;border-radius:4px;background:var(--brand);box-shadow:0 0 16px var(--brand)}
+.caption .nm .mode{margin-left:auto;font-size:9px;font-weight:800;color:rgba(238,241,245,.55);border:1px solid rgba(255,255,255,.16);border-radius:20px;padding:3px 9px;letter-spacing:.6px;text-transform:uppercase}
+.caption .cc{color:rgba(238,241,245,.5);font-size:11.5px;margin-top:4px;line-height:1.45}
+.caption.lt{background:rgba(0,0,0,.02);border-bottom-color:rgba(0,0,0,.06)}
+.caption.lt .nm{color:#1c1a17}.caption.lt .cc{color:rgba(28,26,23,.55)}.caption.lt .mode{color:rgba(28,26,23,.55);border-color:rgba(0,0,0,.15)}
+
+/* STAGE = the frostable backdrop */
+.stage{position:relative;height:340px;overflow:hidden;background:var(--bg);isolation:isolate}
+.blob{position:absolute;border-radius:50%;filter:blur(34px);opacity:.85;z-index:0}
+.grain{position:absolute;inset:0;z-index:1;opacity:.5;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* GLASS primitive */
+.glass{position:absolute;z-index:2;border-radius:16px;
+  background:var(--g-fill);
+  -webkit-backdrop-filter:blur(22px) saturate(165%);backdrop-filter:blur(22px) saturate(165%);
+  border:1px solid var(--g-border);
+  box-shadow:0 18px 40px rgba(0,0,0,.4), inset 0 1px 0 var(--g-hi), inset 0 0 0 1px rgba(255,255,255,.02)}
+
+/* top chrome bar */
+.chrome{top:14px;left:14px;right:14px;height:46px;display:flex;align-items:center;gap:9px;padding:0 12px;border-radius:14px}
+.wordmark{font-family:var(--font-display);font-weight:800;font-size:14px;letter-spacing:-.2px;color:var(--tx);display:flex;align-items:center;gap:7px}
+.wordmark .d{width:9px;height:9px;border-radius:3px;background:var(--brand);box-shadow:0 0 10px var(--brand)}
+.navlite{display:flex;gap:4px;margin-left:6px}
+.navlite span{font-size:11px;font-weight:600;color:var(--tx-2);padding:5px 9px;border-radius:8px}
+.navlite span.on{color:var(--brand);background:var(--brand-soft)}
+.spacer{flex:1}
+.primary{background:var(--brand);color:var(--brand-ink);border:0;border-radius:9px;padding:7px 12px;font-weight:800;font-size:11.5px;font-family:var(--font-ui);display:flex;align-items:center;gap:5px;box-shadow:0 6px 16px var(--brand-soft)}
+
+/* stacked scene strips, offset to show depth */
+.strips{position:absolute;left:14px;top:74px;width:54%;z-index:2}
+.strip{display:flex;align-items:center;gap:9px;border-radius:12px;padding:9px 11px;margin-bottom:8px;
+  background:var(--g-fill);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);
+  border:1px solid var(--g-border);border-left:3px solid var(--brand);
+  box-shadow:0 10px 26px rgba(0,0,0,.32), inset 0 1px 0 var(--g-hi)}
+.strip .sc{font-family:var(--font-mono);font-weight:700;font-size:11.5px;color:var(--tx)}
+.strip .syn{flex:1;font-size:11.5px;color:var(--tx)}
+.strip .ie{font-size:8.5px;font-weight:700;color:var(--tx-2);letter-spacing:.4px}
+.tagdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ai);margin-right:5px;box-shadow:0 0 8px var(--ai)}
+
+/* floating command palette, overlapping the strips */
+.palette{right:14px;top:90px;width:52%;padding:9px;border-radius:16px;z-index:4;
+  box-shadow:0 26px 50px rgba(0,0,0,.5), inset 0 1px 0 var(--g-hi)}
+.palette .q{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--tx-2);padding:6px 8px 9px;border-bottom:1px solid var(--g-border);margin-bottom:6px}
+.palette .q .k{width:13px;height:13px;color:var(--brand)}
+.prow{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:9px;font-size:11.5px;color:var(--tx)}
+.prow.sel{background:var(--brand-soft)}
+.prow .ic{width:13px;height:13px;color:var(--brand)}
+.prow .ai{margin-left:auto;font-size:8.5px;font-weight:800;color:var(--ai);background:var(--ai-soft);border:1px solid var(--ai-line);border-radius:5px;padding:1px 6px}
+
+/* AI suggestion dock, deepest float bottom */
+.dock{left:14px;right:14px;bottom:14px;z-index:5;display:flex;align-items:center;gap:11px;padding:12px 13px;border-radius:15px;
+  background:var(--ai-glass);border:1px solid var(--ai-line);
+  box-shadow:0 22px 44px rgba(0,0,0,.45), inset 0 1px 0 var(--g-hi), 0 0 30px var(--ai-soft)}
+.dock .sp{width:11px;height:11px;border-radius:50%;background:var(--ai);box-shadow:0 0 14px var(--ai);flex:none}
+.dock .tx{flex:1;font-size:12px;color:var(--tx);line-height:1.35}
+.dock .tx b{font-weight:700}
+.dock .go{font-size:10px;font-weight:800;color:var(--ai-ink,var(--ai));background:var(--ai-soft);border:1px solid var(--ai-line);border-radius:8px;padding:5px 10px}
+svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.note{color:rgba(238,241,245,.42);font-size:12px;line-height:1.65;margin-top:8px;border-top:1px solid rgba(255,255,255,.08);padding-top:16px}
+.note b{color:rgba(238,241,245,.64)}
+
+/* ====== THEMES ====== */
+.tungsten{--bg:#0a0a0c;--tx:#f5f1ea;--tx-2:rgba(245,241,234,.62);
+  --brand:#ffb23e;--brand-ink:#1d1402;--brand-soft:rgba(255,178,62,.2);
+  --ai:#34d6e6;--ai-soft:rgba(52,214,230,.2);--ai-line:rgba(52,214,230,.5);--ai-glass:rgba(52,214,230,.14);
+  --g-fill:rgba(30,28,26,.42);--g-border:rgba(255,255,255,.14);--g-hi:rgba(255,255,255,.22)}
+.magic{--bg:#0c0a12;--tx:#f6f0f4;--tx-2:rgba(246,240,244,.62);
+  --brand:#ff9e6d;--brand-ink:#241003;--brand-soft:rgba(255,158,109,.22);
+  --ai:#b49cff;--ai-soft:rgba(180,156,255,.24);--ai-line:rgba(180,156,255,.5);--ai-glass:rgba(180,156,255,.16);
+  --g-fill:rgba(34,26,42,.4);--g-border:rgba(255,255,255,.14);--g-hi:rgba(255,255,255,.22)}
+.graphite{--bg:#101216;--tx:#f5f5f7;--tx-2:rgba(245,245,247,.6);
+  --brand:#3b9bff;--brand-ink:#04203f;--brand-soft:rgba(59,155,255,.22);
+  --ai:#c98bff;--ai-soft:rgba(201,139,255,.22);--ai-line:rgba(201,139,255,.5);--ai-glass:rgba(201,139,255,.15);
+  --g-fill:rgba(40,44,54,.45);--g-border:rgba(255,255,255,.14);--g-hi:rgba(255,255,255,.2)}
+.ceramic{--bg:#eceef3;--tx:#1b1d22;--tx-2:rgba(27,29,34,.6);
+  --brand:#0a7cff;--brand-ink:#fff;--brand-soft:rgba(10,124,255,.16);
+  --ai:#9b3cf0;--ai-ink:#7a2bc4;--ai-soft:rgba(155,60,240,.14);--ai-line:rgba(155,60,240,.34);--ai-glass:rgba(255,255,255,.5);
+  --g-fill:rgba(255,255,255,.5);--g-border:rgba(255,255,255,.7);--g-hi:rgba(255,255,255,.85)}
+</style>
+</head>
+<body>
+
+<h1 class="page">Glassmorphism depth study</h1>
+<p class="lede">Frosted, layered panels floating over an aurora backdrop — real <span class="mono" style="font-size:11px">backdrop-filter</span> blur, inset highlights and stacked shadows. Note how panels overlap to build depth.</p>
+<p class="lede" style="color:rgba(238,241,245,.34);font-size:11.5px">Heads-up: this reverses our earlier "opaque surfaces, glass for chrome only" call — see the note at the bottom on how far to push it.</p>
+
+<div class="sectitle">Dark — glass forward</div>
+
+<!-- TUNGSTEN GLASS -->
+<div class="card tungsten">
+  <div class="caption">
+    <div class="nm"><span class="chip"></span>Tungsten Glass<span class="mode">Dark</span></div>
+    <div class="cc">Warm amber + arc-cyan light pooling behind frosted graphite. Cinematic and premium; the glow reads like stage lighting through haze.</div>
+  </div>
+  <div class="stage">
+    <div class="blob" style="width:240px;height:240px;background:#ffb23e;left:-40px;top:-30px"></div>
+    <div class="blob" style="width:220px;height:220px;background:#34d6e6;right:-50px;top:40px;opacity:.7"></div>
+    <div class="blob" style="width:200px;height:200px;background:#ff6a3d;left:90px;bottom:-60px;opacity:.6"></div>
+    <div class="grain"></div>
+    <div class="glass chrome">
+      <div class="wordmark"><span class="d"></span>StudioFlow</div>
+      <div class="navlite"><span class="on">Breakdown</span><span>Schedule</span><span>Budget</span></div>
+      <div class="spacer"></div>
+      <button class="primary"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button>
+    </div>
+    <div class="strips">
+      <div class="strip"><span class="sc">24</span><span class="ie">INT/D</span><span class="syn">Kitchen — morning</span></div>
+      <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span></div>
+      <div class="strip"><span class="sc">26</span><span class="ie">EXT/N</span><span class="syn">Rooftop chase</span></div>
+    </div>
+    <div class="glass palette">
+      <div class="q"><svg class="k" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search or run a command…</div>
+      <div class="prow sel"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create element “revolver”<span class="ai">AI</span></div>
+      <div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/></svg>Add Sc 25 to Day 4</div>
+      <div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Generate call sheet<span class="ai">AI</span></div>
+    </div>
+    <div class="dock">
+      <span class="sp"></span>
+      <div class="tx">Detected prop <b>“antique revolver”</b> in Sc 25 — add to Props &amp; flag armourer?</div>
+      <span class="go">Review</span>
+    </div>
+  </div>
+</div>
+
+<!-- MAGIC HOUR GLASS -->
+<div class="card magic">
+  <div class="caption">
+    <div class="nm"><span class="chip"></span>Magic Hour Glass<span class="mode">Dark</span></div>
+    <div class="cc">Coral-to-violet dusk light behind the frost. The most atmospheric / emotive — the AI glow really sings against the warm backdrop.</div>
+  </div>
+  <div class="stage">
+    <div class="blob" style="width:250px;height:250px;background:#ff9e6d;left:-50px;top:-40px"></div>
+    <div class="blob" style="width:230px;height:230px;background:#b49cff;right:-60px;top:20px"></div>
+    <div class="blob" style="width:210px;height:210px;background:#ff6a8d;left:110px;bottom:-70px;opacity:.6"></div>
+    <div class="grain"></div>
+    <div class="glass chrome">
+      <div class="wordmark"><span class="d"></span>StudioFlow</div>
+      <div class="navlite"><span class="on">Breakdown</span><span>Schedule</span><span>Budget</span></div>
+      <div class="spacer"></div>
+      <button class="primary"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button>
+    </div>
+    <div class="strips">
+      <div class="strip"><span class="sc">24</span><span class="ie">INT/D</span><span class="syn">Kitchen — morning</span></div>
+      <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span></div>
+      <div class="strip"><span class="sc">26</span><span class="ie">EXT/N</span><span class="syn">Rooftop chase</span></div>
+    </div>
+    <div class="glass palette">
+      <div class="q"><svg class="k" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search or run a command…</div>
+      <div class="prow sel"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create element “revolver”<span class="ai">AI</span></div>
+      <div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/></svg>Add Sc 25 to Day 4</div>
+      <div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Generate call sheet<span class="ai">AI</span></div>
+    </div>
+    <div class="dock">
+      <span class="sp"></span>
+      <div class="tx">Detected prop <b>“antique revolver”</b> in Sc 25 — add to Props &amp; flag armourer?</div>
+      <span class="go">Review</span>
+    </div>
+  </div>
+</div>
+
+<!-- GRAPHITE GLASS -->
+<div class="card graphite">
+  <div class="caption">
+    <div class="nm"><span class="chip"></span>Graphite Glass<span class="mode">Dark</span></div>
+    <div class="cc">Apple "vibrancy" — cool, restrained, neutral frost with just enough blue/purple bleed. The most professional / least flashy of the glass set.</div>
+  </div>
+  <div class="stage">
+    <div class="blob" style="width:240px;height:240px;background:#3b9bff;left:-40px;top:-40px;opacity:.7"></div>
+    <div class="blob" style="width:220px;height:220px;background:#c98bff;right:-50px;top:30px;opacity:.6"></div>
+    <div class="blob" style="width:200px;height:200px;background:#3b9bff;left:120px;bottom:-70px;opacity:.4"></div>
+    <div class="grain"></div>
+    <div class="glass chrome">
+      <div class="wordmark"><span class="d"></span>StudioFlow</div>
+      <div class="navlite"><span class="on">Breakdown</span><span>Schedule</span><span>Budget</span></div>
+      <div class="spacer"></div>
+      <button class="primary"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button>
+    </div>
+    <div class="strips">
+      <div class="strip"><span class="sc">24</span><span class="ie">INT/D</span><span class="syn">Kitchen — morning</span></div>
+      <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span></div>
+      <div class="strip"><span class="sc">26</span><span class="ie">EXT/N</span><span class="syn">Rooftop chase</span></div>
+    </div>
+    <div class="glass palette">
+      <div class="q"><svg class="k" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search or run a command…</div>
+      <div class="prow sel"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create element “revolver”<span class="ai">AI</span></div>
+      <div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/></svg>Add Sc 25 to Day 4</div>
+      <div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Generate call sheet<span class="ai">AI</span></div>
+    </div>
+    <div class="dock">
+      <span class="sp"></span>
+      <div class="tx">Detected prop <b>“antique revolver”</b> in Sc 25 — add to Props &amp; flag armourer?</div>
+      <span class="go">Review</span>
+    </div>
+  </div>
+</div>
+
+<div class="sectitle">Light — liquid glass</div>
+
+<!-- CERAMIC GLASS -->
+<div class="card ceramic">
+  <div class="caption lt">
+    <div class="nm"><span class="chip"></span>Ceramic Glass<span class="mode">Light</span></div>
+    <div class="cc">Apple's newer "liquid glass" in daylight — bright white frost over soft pastel light. Airy and modern; proves the effect works in light mode too.</div>
+  </div>
+  <div class="stage">
+    <div class="blob" style="width:250px;height:250px;background:#7db8ff;left:-50px;top:-40px;opacity:.7"></div>
+    <div class="blob" style="width:230px;height:230px;background:#d8a0ff;right:-60px;top:30px;opacity:.6"></div>
+    <div class="blob" style="width:210px;height:210px;background:#ffc59e;left:110px;bottom:-70px;opacity:.6"></div>
+    <div class="grain" style="opacity:.25"></div>
+    <div class="glass chrome">
+      <div class="wordmark"><span class="d"></span>StudioFlow</div>
+      <div class="navlite"><span class="on">Breakdown</span><span>Schedule</span><span>Budget</span></div>
+      <div class="spacer"></div>
+      <button class="primary"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button>
+    </div>
+    <div class="strips">
+      <div class="strip"><span class="sc">24</span><span class="ie">INT/D</span><span class="syn">Kitchen — morning</span></div>
+      <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span></div>
+      <div class="strip"><span class="sc">26</span><span class="ie">EXT/N</span><span class="syn">Rooftop chase</span></div>
+    </div>
+    <div class="glass palette">
+      <div class="q"><svg class="k" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search or run a command…</div>
+      <div class="prow sel"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create element “revolver”<span class="ai">AI</span></div>
+      <div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/></svg>Add Sc 25 to Day 4</div>
+      <div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Generate call sheet<span class="ai">AI</span></div>
+    </div>
+    <div class="dock">
+      <span class="sp"></span>
+      <div class="tx">Detected prop <b>“antique revolver”</b> in Sc 25 — add to Props &amp; flag armourer?</div>
+      <span class="go">Review</span>
+    </div>
+  </div>
+</div>
+
+<div class="note"><b>The tradeoff to decide:</b> glass looks gorgeous in a hero shot, but a film breakdown is a <em>dense data surface</em> — hundreds of rows where blur-behind-blur hurts contrast, legibility and (on big grids) scroll performance. My recommendation is a <b>"glass chrome, solid content"</b> middle path: frosted top bar, command palette, AI dock, side panels &amp; modals (the floating layers you see here), but <em>opaque</em> stripboards, tables and forms underneath. Tell me which way you lean: <b>(a)</b> full glass everywhere, <b>(b)</b> glass chrome + solid content [recommended], or <b>(c)</b> back to mostly-opaque with subtle glass accents — and which of these four backdrops you like best.</div>
+
+</body>
+</html>

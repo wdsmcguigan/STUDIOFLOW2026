@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StudioFlow — Apple & Earthy Palettes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--font-display:'Bricolage Grotesque',sans-serif;--font-ui:'Hanken Grotesk',system-ui,sans-serif;--font-mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#070809;color:#eef1f5;font-family:var(--font-ui);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;padding:18px 14px 70px}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+h1.page{font-family:var(--font-display);font-weight:800;font-size:25px;letter-spacing:-.5px;margin-bottom:5px}
+p.lede{color:rgba(238,241,245,.45);font-size:13px;margin-bottom:8px;line-height:1.5}
+.sectitle{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:rgba(238,241,245,.4);font-weight:700;margin:26px 2px 13px;display:flex;align-items:center;gap:9px}
+.sectitle::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.09)}
+
+.card{border:1px solid var(--line-2);border-radius:18px;overflow:hidden;margin-bottom:18px;background:var(--bg)}
+.head{padding:15px 16px 13px;border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+.head::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 140% at 100% 0%, var(--brand-soft), transparent 60%);pointer-events:none}
+.head .nm{font-family:var(--font-display);font-weight:800;font-size:19px;letter-spacing:-.3px;display:flex;align-items:center;gap:10px;position:relative;color:var(--tx)}
+.head .nm .chip{width:13px;height:13px;border-radius:4px;background:var(--brand);box-shadow:0 0 14px var(--brand-soft)}
+.head .nm .mode{margin-left:auto;font-size:9px;font-weight:800;color:var(--tx-3);border:1px solid var(--line-2);border-radius:20px;padding:3px 9px;letter-spacing:.6px;text-transform:uppercase}
+.head .cc{color:var(--tx-3);font-size:11.5px;margin-top:4px;position:relative;line-height:1.45}
+.head .cc b{color:var(--tx-2)}
+
+.swatches{display:flex;border-bottom:1px solid var(--line)}
+.sw{flex:1;height:44px;display:flex;align-items:flex-end;padding:5px 7px;font-size:8.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+
+.demo{padding:13px;background:var(--bg)}
+.bar{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.navpill{display:flex;align-items:center;gap:8px;background:var(--s3);border-radius:8px;padding:7px 11px;font-weight:600;font-size:12.5px;position:relative;color:var(--tx)}
+.navpill::before{content:"";position:absolute;left:-1px;top:6px;bottom:6px;width:3px;border-radius:3px;background:var(--brand)}
+.navpill .ic{width:14px;height:14px;color:var(--brand)}
+.spacer{flex:1}
+.primary{background:var(--brand);color:var(--brand-ink);border:0;border-radius:8px;padding:8px 13px;font-weight:800;font-size:12.5px;font-family:var(--font-ui);display:flex;align-items:center;gap:6px}
+.strip{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:8px;padding:9px 11px;margin-bottom:9px;color:var(--tx)}
+.strip .sc{font-family:var(--font-mono);font-weight:600;font-size:12px}
+.strip .ie{font-size:9px;font-weight:700;color:var(--tx-2);letter-spacing:.5px}
+.strip .syn{flex:1;font-size:12.5px}
+.tagdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ai);margin-right:5px}
+.aitag{font-size:10px;font-weight:800;color:var(--ai-ink,var(--ai));background:var(--ai-soft);border:1px solid var(--ai-line);border-radius:6px;padding:2px 8px}
+.sugg{display:flex;align-items:flex-start;gap:10px;background:var(--ai-soft);border:1px solid var(--ai-line);border-radius:11px;padding:11px 12px;font-size:12.5px;line-height:1.4;color:var(--tx-2)}
+.sugg .sp{width:9px;height:9px;border-radius:50%;background:var(--ai);box-shadow:0 0 10px var(--ai);margin-top:3px;flex:none}
+.sugg b{color:var(--tx)}
+.statusrow{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+.st{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px}
+.st.ok{color:var(--ok-c,#34d399);background:var(--ok-s,rgba(52,211,153,.13));border:1px solid var(--ok-l,rgba(52,211,153,.3))}
+.st.wn{color:var(--wn-c,#fbbf24);background:var(--wn-s,rgba(251,191,36,.13));border:1px solid var(--wn-l,rgba(251,191,36,.3))}
+.st.er{color:var(--er-c,#f87171);background:var(--er-s,rgba(248,113,113,.13));border:1px solid var(--er-l,rgba(248,113,113,.3))}
+svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.note{color:rgba(238,241,245,.4);font-size:12px;line-height:1.65;margin-top:8px;border-top:1px solid rgba(255,255,255,.08);padding-top:16px}
+.note b{color:rgba(238,241,245,.62)}
+
+/* ===== APPLE-INSPIRED ===== */
+.graphite{--bg:#1c1c1e;--s1:#242426;--s2:#2c2c2e;--s3:#3a3a3c;--line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.16);
+  --tx:#f5f5f7;--tx-2:rgba(245,245,247,.62);--tx-3:rgba(245,245,247,.4);
+  --brand:#0a84ff;--brand-ink:#fff;--brand-soft:rgba(10,132,255,.16);--brand-line:rgba(10,132,255,.4);
+  --ai:#bf5af2;--ai-ink:#bf5af2;--ai-soft:rgba(191,90,242,.16);--ai-line:rgba(191,90,242,.42)}
+.ceramic{--bg:#f5f5f7;--s1:#fff;--s2:#fff;--s3:#e8e8ed;--line:rgba(0,0,0,.09);--line-2:rgba(0,0,0,.14);
+  --tx:#1d1d1f;--tx-2:rgba(0,0,0,.62);--tx-3:rgba(0,0,0,.42);
+  --brand:#007aff;--brand-ink:#fff;--brand-soft:rgba(0,122,255,.12);--brand-line:rgba(0,122,255,.32);
+  --ai:#af52de;--ai-ink:#8b3cc0;--ai-soft:rgba(175,82,222,.12);--ai-line:rgba(175,82,222,.34);
+  --ok-c:#15803d;--ok-s:rgba(34,197,94,.12);--ok-l:rgba(34,197,94,.3);--wn-c:#b45309;--wn-s:rgba(245,158,11,.14);--wn-l:rgba(245,158,11,.32);--er-c:#b91c1c;--er-s:rgba(239,68,68,.1);--er-l:rgba(239,68,68,.3)}
+
+/* ===== LIGHTER / EARTHY ===== */
+.clay{--bg:#f5efe6;--s1:#fdfbf7;--s2:#fbf6ee;--s3:#ece2d3;--line:rgba(74,55,40,.1);--line-2:rgba(74,55,40,.16);
+  --tx:#2f261d;--tx-2:rgba(47,38,29,.62);--tx-3:rgba(47,38,29,.44);
+  --brand:#c2683f;--brand-ink:#fff;--brand-soft:rgba(194,104,63,.13);--brand-line:rgba(194,104,63,.34);
+  --ai:#6f8f6a;--ai-ink:#4e6b49;--ai-soft:rgba(111,143,106,.15);--ai-line:rgba(111,143,106,.38);
+  --ok-c:#3f7d3a;--ok-s:rgba(63,125,58,.12);--ok-l:rgba(63,125,58,.3);--wn-c:#a9671a;--wn-s:rgba(169,103,26,.14);--wn-l:rgba(169,103,26,.32);--er-c:#b03a2e;--er-s:rgba(176,58,46,.1);--er-l:rgba(176,58,46,.3)}
+.sandstone{--bg:#f1e8db;--s1:#fbf6ed;--s2:#f7eede;--s3:#e7dac6;--line:rgba(70,50,30,.1);--line-2:rgba(70,50,30,.16);
+  --tx:#322820;--tx-2:rgba(50,40,32,.6);--tx-3:rgba(50,40,32,.42);
+  --brand:#b6552f;--brand-ink:#fff;--brand-soft:rgba(182,85,47,.13);--brand-line:rgba(182,85,47,.34);
+  --ai:#4f8a86;--ai-ink:#37706c;--ai-soft:rgba(79,138,134,.14);--ai-line:rgba(79,138,134,.36);
+  --ok-c:#3f7d3a;--ok-s:rgba(63,125,58,.12);--ok-l:rgba(63,125,58,.3);--wn-c:#a9671a;--wn-s:rgba(169,103,26,.14);--wn-l:rgba(169,103,26,.32);--er-c:#b03a2e;--er-s:rgba(176,58,46,.1);--er-l:rgba(176,58,46,.3)}
+.linen{--bg:#f3f0e7;--s1:#fcfbf5;--s2:#f8f5ec;--s3:#e7e3d4;--line:rgba(60,55,35,.1);--line-2:rgba(60,55,35,.15);
+  --tx:#2c2a21;--tx-2:rgba(44,42,33,.6);--tx-3:rgba(44,42,33,.42);
+  --brand:#a8842c;--brand-ink:#fff;--brand-soft:rgba(168,132,44,.14);--brand-line:rgba(168,132,44,.36);
+  --ai:#5b6fa6;--ai-ink:#475a8c;--ai-soft:rgba(91,111,166,.13);--ai-line:rgba(91,111,166,.36);
+  --ok-c:#3f7d3a;--ok-s:rgba(63,125,58,.12);--ok-l:rgba(63,125,58,.3);--wn-c:#a9671a;--wn-s:rgba(169,103,26,.14);--wn-l:rgba(169,103,26,.32);--er-c:#b03a2e;--er-s:rgba(176,58,46,.1);--er-l:rgba(176,58,46,.3)}
+.umber{--bg:#15110d;--s1:#1c1712;--s2:#241d16;--s3:#2e261d;--line:rgba(255,240,220,.07);--line-2:rgba(255,240,220,.13);
+  --tx:#f1e9dd;--tx-2:rgba(241,233,221,.6);--tx-3:rgba(241,233,221,.4);
+  --brand:#d98a52;--brand-ink:#1d0f05;--brand-soft:rgba(217,138,82,.15);--brand-line:rgba(217,138,82,.36);
+  --ai:#85b58a;--ai-ink:#85b58a;--ai-soft:rgba(133,181,138,.14);--ai-line:rgba(133,181,138,.36)}
+</style>
+</head>
+<body>
+
+<h1 class="page">More directions — Apple &amp; earthy</h1>
+<p class="lede">Two takes on Apple's clarity, plus four warmer / lighter / earthier moods. Light themes show as light cards on purpose so you can feel them. Brand vs <b style="color:#bf5af2">AI</b> roles stay consistent; status colours stay reserved.</p>
+
+<div class="sectitle">Apple-inspired</div>
+
+<!-- GRAPHITE PRO -->
+<div class="card graphite">
+  <div class="head">
+    <div class="nm"><span class="chip"></span>Graphite Pro<span class="mode">Dark</span></div>
+    <div class="cc"><b>Final Cut / Logic Pro.</b> Apple's neutral pro-app graphite — calm, precise, content-first — with system-blue as brand and the <b>Apple Intelligence</b> purple as the AI signature.</div>
+  </div>
+  <div class="swatches">
+    <div class="sw" style="background:#0a84ff;color:#fff">Brand</div>
+    <div class="sw" style="background:#bf5af2;color:#fff">AI</div>
+    <div class="sw" style="background:#2c2c2e;color:rgba(255,255,255,.7)">Surface</div>
+    <div class="sw" style="background:#1c1c1e;color:rgba(255,255,255,.7)">Base</div>
+  </div>
+  <div class="demo">
+    <div class="bar"><div class="navpill"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div><div class="spacer"></div><button class="primary"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span><span class="aitag">AI</span></div>
+    <div class="sugg"><span class="sp"></span><div>Detected prop <b>"antique revolver"</b> in Sc 25 → add to <b>Props</b>?</div></div>
+    <div class="statusrow"><span class="st ok">Confirmed</span><span class="st wn">Weather watch</span><span class="st er">Over budget</span></div>
+  </div>
+</div>
+
+<!-- CERAMIC -->
+<div class="card ceramic">
+  <div class="head">
+    <div class="nm"><span class="chip"></span>Ceramic<span class="mode">Light</span></div>
+    <div class="cc"><b>Apple.com in daylight.</b> The signature #f5f5f7 off-white, crisp white cards, generous air. This is what the <em>light</em> mode could feel like — bright, friendly, retail-grade.</div>
+  </div>
+  <div class="swatches">
+    <div class="sw" style="background:#007aff;color:#fff">Brand</div>
+    <div class="sw" style="background:#af52de;color:#fff">AI</div>
+    <div class="sw" style="background:#e8e8ed;color:rgba(0,0,0,.5)">Surface</div>
+    <div class="sw" style="background:#f5f5f7;color:rgba(0,0,0,.5)">Base</div>
+  </div>
+  <div class="demo">
+    <div class="bar"><div class="navpill"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div><div class="spacer"></div><button class="primary"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span><span class="aitag">AI</span></div>
+    <div class="sugg"><span class="sp"></span><div>Detected prop <b>"antique revolver"</b> in Sc 25 → add to <b>Props</b>?</div></div>
+    <div class="statusrow"><span class="st ok">Confirmed</span><span class="st wn">Weather watch</span><span class="st er">Over budget</span></div>
+  </div>
+</div>
+
+<div class="sectitle">Lighter &amp; earthier</div>
+
+<!-- CLAY & SAGE -->
+<div class="card clay">
+  <div class="head">
+    <div class="nm"><span class="chip"></span>Clay &amp; Sage<span class="mode">Light</span></div>
+    <div class="cc"><b>Warm paper, terracotta, sage.</b> An artisanal, calm, "moodboard" feel — like a beautifully bound production binder. Easy on the eyes for long planning sessions.</div>
+  </div>
+  <div class="swatches">
+    <div class="sw" style="background:#c2683f;color:#fff">Brand</div>
+    <div class="sw" style="background:#6f8f6a;color:#fff">AI</div>
+    <div class="sw" style="background:#ece2d3;color:rgba(47,38,29,.6)">Surface</div>
+    <div class="sw" style="background:#f5efe6;color:rgba(47,38,29,.6)">Paper</div>
+  </div>
+  <div class="demo">
+    <div class="bar"><div class="navpill"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div><div class="spacer"></div><button class="primary"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span><span class="aitag">AI</span></div>
+    <div class="sugg"><span class="sp"></span><div>Detected prop <b>"antique revolver"</b> in Sc 25 → add to <b>Props</b>?</div></div>
+    <div class="statusrow"><span class="st ok">Confirmed</span><span class="st wn">Weather watch</span><span class="st er">Over budget</span></div>
+  </div>
+</div>
+
+<!-- SANDSTONE -->
+<div class="card sandstone">
+  <div class="head">
+    <div class="nm"><span class="chip"></span>Sandstone<span class="mode">Light</span></div>
+    <div class="cc"><b>Desert location scout.</b> Sun-baked sand with a burnt-sienna brand and a dusty oasis-teal AI. Warmer and a touch bolder than Clay — strong for outdoorsy / indie work.</div>
+  </div>
+  <div class="swatches">
+    <div class="sw" style="background:#b6552f;color:#fff">Brand</div>
+    <div class="sw" style="background:#4f8a86;color:#fff">AI</div>
+    <div class="sw" style="background:#e7dac6;color:rgba(50,40,32,.6)">Surface</div>
+    <div class="sw" style="background:#f1e8db;color:rgba(50,40,32,.6)">Sand</div>
+  </div>
+  <div class="demo">
+    <div class="bar"><div class="navpill"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div><div class="spacer"></div><button class="primary"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span><span class="aitag">AI</span></div>
+    <div class="sugg"><span class="sp"></span><div>Detected prop <b>"antique revolver"</b> in Sc 25 → add to <b>Props</b>?</div></div>
+    <div class="statusrow"><span class="st ok">Confirmed</span><span class="st wn">Weather watch</span><span class="st er">Over budget</span></div>
+  </div>
+</div>
+
+<!-- LINEN & INDIGO -->
+<div class="card linen">
+  <div class="head">
+    <div class="nm"><span class="chip"></span>Linen &amp; Indigo<span class="mode">Light</span></div>
+    <div class="cc"><b>Natural linen, ochre, dusk indigo.</b> The most muted/editorial of the light set — ochre-gold brand with a soft indigo AI. Reads grown-up and understated.</div>
+  </div>
+  <div class="swatches">
+    <div class="sw" style="background:#a8842c;color:#fff">Brand</div>
+    <div class="sw" style="background:#5b6fa6;color:#fff">AI</div>
+    <div class="sw" style="background:#e7e3d4;color:rgba(44,42,33,.6)">Surface</div>
+    <div class="sw" style="background:#f3f0e7;color:rgba(44,42,33,.6)">Linen</div>
+  </div>
+  <div class="demo">
+    <div class="bar"><div class="navpill"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div><div class="spacer"></div><button class="primary"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span><span class="aitag">AI</span></div>
+    <div class="sugg"><span class="sp"></span><div>Detected prop <b>"antique revolver"</b> in Sc 25 → add to <b>Props</b>?</div></div>
+    <div class="statusrow"><span class="st ok">Confirmed</span><span class="st wn">Weather watch</span><span class="st er">Over budget</span></div>
+  </div>
+</div>
+
+<!-- UMBER & SAGE (dark earthy) -->
+<div class="card umber">
+  <div class="head">
+    <div class="nm"><span class="chip"></span>Umber &amp; Sage<span class="mode">Dark</span></div>
+    <div class="cc"><b>Earthy, but dark.</b> If you love the warmth of Clay but want a dark UI: a deep umber-brown base with clay brand and sage AI. Bridges the two worlds.</div>
+  </div>
+  <div class="swatches">
+    <div class="sw" style="background:#d98a52;color:#1d0f05">Brand</div>
+    <div class="sw" style="background:#85b58a;color:#0c1f0e">AI</div>
+    <div class="sw" style="background:#241d16;color:rgba(241,233,221,.7)">Surface</div>
+    <div class="sw" style="background:#15110d;color:rgba(241,233,221,.7)">Umber</div>
+  </div>
+  <div class="demo">
+    <div class="bar"><div class="navpill"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div><div class="spacer"></div><button class="primary"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span><span class="aitag">AI</span></div>
+    <div class="sugg"><span class="sp"></span><div>Detected prop <b>"antique revolver"</b> in Sc 25 → add to <b>Props</b>?</div></div>
+    <div class="statusrow"><span class="st ok">Confirmed</span><span class="st wn">Weather watch</span><span class="st er">Over budget</span></div>
+  </div>
+</div>
+
+<div class="note"><b>Where we are:</b> you've now seen 12 directions across three files — film-noir (Tungsten, Copper, Sodium, Safelight, Magic Hour, Phosphor) and this set (Graphite Pro, Ceramic, Clay &amp; Sage, Sandstone, Linen &amp; Indigo, Umber &amp; Sage). Since we're shipping <b>light + dark</b>, the real answer is usually a <b>pair</b>: e.g. "Graphite Pro dark + Ceramic light," or "Tungsten dark + Clay light." Tell me a favourite (or a pairing, or a mash-up) and I'll refine that one to final and lock it into the spec.</div>
+
+</body>
+</html>

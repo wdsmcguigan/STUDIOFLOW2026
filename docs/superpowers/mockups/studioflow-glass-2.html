@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StudioFlow — Glass × Palettes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--font-display:'Bricolage Grotesque',sans-serif;--font-ui:'Hanken Grotesk',system-ui,sans-serif;--font-mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#06070a;color:#eef1f5;font-family:var(--font-ui);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;padding:18px 14px 70px}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+h1.page{font-family:var(--font-display);font-weight:800;font-size:25px;letter-spacing:-.5px;margin-bottom:5px}
+p.lede{color:rgba(238,241,245,.48);font-size:13px;margin-bottom:6px;line-height:1.5}
+.sectitle{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:rgba(238,241,245,.4);font-weight:700;margin:24px 2px 12px;display:flex;align-items:center;gap:9px}
+.sectitle::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.09)}
+
+.card{border-radius:20px;overflow:hidden;margin-bottom:18px;border:1px solid rgba(255,255,255,.1);box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.caption{padding:13px 15px;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.07)}
+.caption .nm{font-family:var(--font-display);font-weight:800;font-size:18px;letter-spacing:-.3px;display:flex;align-items:center;gap:9px}
+.caption .nm .chip{width:12px;height:12px;border-radius:4px;background:var(--brand);box-shadow:0 0 16px var(--brand)}
+.caption .nm .mode{margin-left:auto;font-size:9px;font-weight:800;color:rgba(238,241,245,.55);border:1px solid rgba(255,255,255,.16);border-radius:20px;padding:3px 9px;letter-spacing:.6px;text-transform:uppercase}
+.caption .cc{color:rgba(238,241,245,.5);font-size:11.5px;margin-top:4px;line-height:1.45}
+.caption.lt{background:rgba(0,0,0,.02);border-bottom-color:rgba(0,0,0,.06)}
+.caption.lt .nm{color:#1c1a17}.caption.lt .cc{color:rgba(28,26,23,.55)}.caption.lt .mode{color:rgba(28,26,23,.55);border-color:rgba(0,0,0,.15)}
+
+.stage{position:relative;height:340px;overflow:hidden;background:var(--bg);isolation:isolate}
+.blob{position:absolute;border-radius:50%;filter:blur(36px);z-index:0}
+.grain{position:absolute;inset:0;z-index:1;opacity:.45;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+.glass{position:absolute;z-index:2;border-radius:16px;background:var(--g-fill);
+  -webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%);
+  border:1px solid var(--g-border);
+  box-shadow:0 18px 40px rgba(0,0,0,.4), inset 0 1px 0 var(--g-hi), inset 0 0 0 1px rgba(255,255,255,.02)}
+.chrome{top:14px;left:14px;right:14px;height:46px;display:flex;align-items:center;gap:9px;padding:0 12px;border-radius:14px}
+.wordmark{font-family:var(--font-display);font-weight:800;font-size:14px;letter-spacing:-.2px;color:var(--tx);display:flex;align-items:center;gap:7px}
+.wordmark .d{width:9px;height:9px;border-radius:3px;background:var(--brand);box-shadow:0 0 10px var(--brand)}
+.navlite{display:flex;gap:4px;margin-left:6px}
+.navlite span{font-size:11px;font-weight:600;color:var(--tx-2);padding:5px 9px;border-radius:8px}
+.navlite span.on{color:var(--brand-on,var(--brand));background:var(--brand-soft)}
+.spacer{flex:1}
+.primary{background:var(--brand);color:var(--brand-ink);border:0;border-radius:9px;padding:7px 12px;font-weight:800;font-size:11.5px;font-family:var(--font-ui);display:flex;align-items:center;gap:5px;box-shadow:0 6px 16px var(--brand-soft)}
+.strips{position:absolute;left:14px;top:74px;width:54%;z-index:2}
+.strip{display:flex;align-items:center;gap:9px;border-radius:12px;padding:9px 11px;margin-bottom:8px;
+  background:var(--g-fill);-webkit-backdrop-filter:blur(18px) saturate(155%);backdrop-filter:blur(18px) saturate(155%);
+  border:1px solid var(--g-border);border-left:3px solid var(--brand);
+  box-shadow:0 10px 26px rgba(0,0,0,.3), inset 0 1px 0 var(--g-hi)}
+.strip .sc{font-family:var(--font-mono);font-weight:700;font-size:11.5px;color:var(--tx)}
+.strip .syn{flex:1;font-size:11.5px;color:var(--tx)}
+.strip .ie{font-size:8.5px;font-weight:700;color:var(--tx-2);letter-spacing:.4px}
+.tagdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ai);margin-right:5px;box-shadow:0 0 8px var(--ai)}
+.palette{right:14px;top:90px;width:52%;padding:9px;border-radius:16px;z-index:4;box-shadow:0 26px 50px rgba(0,0,0,.5), inset 0 1px 0 var(--g-hi)}
+.palette .q{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--tx-2);padding:6px 8px 9px;border-bottom:1px solid var(--g-border);margin-bottom:6px}
+.palette .q .k{width:13px;height:13px;color:var(--brand-on,var(--brand))}
+.prow{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:9px;font-size:11.5px;color:var(--tx)}
+.prow.sel{background:var(--brand-soft)}
+.prow .ic{width:13px;height:13px;color:var(--brand-on,var(--brand))}
+.prow .ai{margin-left:auto;font-size:8.5px;font-weight:800;color:var(--ai-ink,var(--ai));background:var(--ai-soft);border:1px solid var(--ai-line);border-radius:5px;padding:1px 6px}
+.dock{left:14px;right:14px;bottom:14px;z-index:5;display:flex;align-items:center;gap:11px;padding:12px 13px;border-radius:15px;
+  background:var(--ai-glass);border:1px solid var(--ai-line);
+  box-shadow:0 22px 44px rgba(0,0,0,.45), inset 0 1px 0 var(--g-hi), 0 0 30px var(--ai-soft)}
+.dock .sp{width:11px;height:11px;border-radius:50%;background:var(--ai);box-shadow:0 0 14px var(--ai);flex:none}
+.dock .tx{flex:1;font-size:12px;color:var(--tx);line-height:1.35}.dock .tx b{font-weight:700}
+.dock .go{font-size:10px;font-weight:800;color:var(--ai-ink,var(--ai));background:var(--ai-soft);border:1px solid var(--ai-line);border-radius:8px;padding:5px 10px}
+svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.note{color:rgba(238,241,245,.42);font-size:12px;line-height:1.65;margin-top:8px;border-top:1px solid rgba(255,255,255,.08);padding-top:16px}
+.note b{color:rgba(238,241,245,.64)}
+
+/* ===== THEMES ===== */
+.tungsten{--bg:#0a0a0c;--tx:#f5f1ea;--tx-2:rgba(245,241,234,.62);
+  --brand:#ffb23e;--brand-ink:#1d1402;--brand-soft:rgba(255,178,62,.2);
+  --ai:#34d6e6;--ai-soft:rgba(52,214,230,.2);--ai-line:rgba(52,214,230,.5);--ai-glass:rgba(52,214,230,.14);
+  --g-fill:rgba(30,28,26,.42);--g-border:rgba(255,255,255,.14);--g-hi:rgba(255,255,255,.22)}
+.phosphor{--bg:#08090b;--tx:#eef1ee;--tx-2:rgba(238,241,238,.6);
+  --brand:#e8dab8;--brand-ink:#1a1505;--brand-soft:rgba(232,218,184,.18);
+  --ai:#4fe08c;--ai-soft:rgba(79,224,140,.2);--ai-line:rgba(79,224,140,.5);--ai-glass:rgba(79,224,140,.13);
+  --g-fill:rgba(22,26,28,.44);--g-border:rgba(255,255,255,.12);--g-hi:rgba(255,255,255,.18)}
+.umber{--bg:#15110d;--tx:#f1e9dd;--tx-2:rgba(241,233,221,.6);
+  --brand:#d98a52;--brand-ink:#1d0f05;--brand-soft:rgba(217,138,82,.2);
+  --ai:#85b58a;--ai-soft:rgba(133,181,138,.2);--ai-line:rgba(133,181,138,.5);--ai-glass:rgba(133,181,138,.14);
+  --g-fill:rgba(36,29,22,.42);--g-border:rgba(255,255,255,.12);--g-hi:rgba(255,255,255,.18)}
+.clay{--bg:#f1ebe1;--tx:#2f261d;--tx-2:rgba(47,38,29,.6);
+  --brand:#c2683f;--brand-ink:#fff;--brand-on:#a65327;--brand-soft:rgba(194,104,63,.16);
+  --ai:#5f7d5a;--ai-ink:#425b3d;--ai-soft:rgba(95,125,90,.16);--ai-line:rgba(95,125,90,.36);--ai-glass:rgba(255,255,255,.55);
+  --g-fill:rgba(255,255,255,.5);--g-border:rgba(255,255,255,.72);--g-hi:rgba(255,255,255,.85)}
+</style>
+</head>
+<body>
+
+<h1 class="page">Glass × your four palettes</h1>
+<p class="lede">A touch of frosted depth on <b style="color:#ffb23e">Tungsten&nbsp;&amp;&nbsp;Arc</b>, <b style="color:#e8dab8">Phosphor</b>, <b style="color:#d98a52">Umber&nbsp;&amp;&nbsp;Sage</b> and <b style="color:#c2683f">Clay&nbsp;&amp;&nbsp;Sage</b> — same floating chrome / palette / AI-dock, tuned to each palette's own light.</p>
+
+<div class="sectitle">Dark</div>
+
+<!-- TUNGSTEN -->
+<div class="card tungsten">
+  <div class="caption"><div class="nm"><span class="chip"></span>Tungsten &amp; Arc · glass<span class="mode">Dark</span></div>
+    <div class="cc">Amber stage-light and arc-cyan pooling behind frost. Warm, cinematic, premium.</div></div>
+  <div class="stage">
+    <div class="blob" style="width:240px;height:240px;background:#ffb23e;left:-40px;top:-30px;opacity:.7"></div>
+    <div class="blob" style="width:220px;height:220px;background:#34d6e6;right:-50px;top:40px;opacity:.55"></div>
+    <div class="blob" style="width:200px;height:200px;background:#ff6a3d;left:90px;bottom:-60px;opacity:.45"></div>
+    <div class="grain"></div>
+    <div class="glass chrome"><div class="wordmark"><span class="d"></span>StudioFlow</div><div class="navlite"><span class="on">Breakdown</span><span>Schedule</span><span>Budget</span></div><div class="spacer"></div><button class="primary"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strips"><div class="strip"><span class="sc">24</span><span class="ie">INT/D</span><span class="syn">Kitchen — morning</span></div><div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span></div><div class="strip"><span class="sc">26</span><span class="ie">EXT/N</span><span class="syn">Rooftop chase</span></div></div>
+    <div class="glass palette"><div class="q"><svg class="k" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search or run a command…</div><div class="prow sel"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create element “revolver”<span class="ai">AI</span></div><div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/></svg>Add Sc 25 to Day 4</div><div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Generate call sheet<span class="ai">AI</span></div></div>
+    <div class="dock"><span class="sp"></span><div class="tx">Detected prop <b>“antique revolver”</b> in Sc 25 — add to Props &amp; flag armourer?</div><span class="go">Review</span></div>
+  </div>
+</div>
+
+<!-- PHOSPHOR -->
+<div class="card phosphor">
+  <div class="caption"><div class="nm"><span class="chip"></span>Phosphor / Scopes · glass<span class="mode">Dark</span></div>
+    <div class="cc">Near-monochrome frost with a single electric phosphor-green glow — the colourist's-suite reading. Most restrained of the four.</div></div>
+  <div class="stage">
+    <div class="blob" style="width:240px;height:240px;background:#4fe08c;left:-50px;top:-30px;opacity:.5"></div>
+    <div class="blob" style="width:210px;height:210px;background:#2f9e7a;right:-50px;top:50px;opacity:.4"></div>
+    <div class="blob" style="width:200px;height:200px;background:#cdbf94;left:100px;bottom:-70px;opacity:.22"></div>
+    <div class="grain"></div>
+    <div class="glass chrome"><div class="wordmark"><span class="d"></span>StudioFlow</div><div class="navlite"><span class="on">Breakdown</span><span>Schedule</span><span>Budget</span></div><div class="spacer"></div><button class="primary"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strips"><div class="strip"><span class="sc">24</span><span class="ie">INT/D</span><span class="syn">Kitchen — morning</span></div><div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span></div><div class="strip"><span class="sc">26</span><span class="ie">EXT/N</span><span class="syn">Rooftop chase</span></div></div>
+    <div class="glass palette"><div class="q"><svg class="k" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search or run a command…</div><div class="prow sel"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create element “revolver”<span class="ai">AI</span></div><div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/></svg>Add Sc 25 to Day 4</div><div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Generate call sheet<span class="ai">AI</span></div></div>
+    <div class="dock"><span class="sp"></span><div class="tx">Detected prop <b>“antique revolver”</b> in Sc 25 — add to Props &amp; flag armourer?</div><span class="go">Review</span></div>
+  </div>
+</div>
+
+<!-- UMBER -->
+<div class="card umber">
+  <div class="caption"><div class="nm"><span class="chip"></span>Umber &amp; Sage · glass<span class="mode">Dark</span></div>
+    <div class="cc">Deep umber-brown base with clay and sage light. Earthy warmth that stays dark — cosy, grounded, distinctive.</div></div>
+  <div class="stage">
+    <div class="blob" style="width:240px;height:240px;background:#d98a52;left:-40px;top:-30px;opacity:.6"></div>
+    <div class="blob" style="width:220px;height:220px;background:#85b58a;right:-50px;top:40px;opacity:.5"></div>
+    <div class="blob" style="width:200px;height:200px;background:#b5662f;left:95px;bottom:-65px;opacity:.5"></div>
+    <div class="grain"></div>
+    <div class="glass chrome"><div class="wordmark"><span class="d"></span>StudioFlow</div><div class="navlite"><span class="on">Breakdown</span><span>Schedule</span><span>Budget</span></div><div class="spacer"></div><button class="primary"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strips"><div class="strip"><span class="sc">24</span><span class="ie">INT/D</span><span class="syn">Kitchen — morning</span></div><div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span></div><div class="strip"><span class="sc">26</span><span class="ie">EXT/N</span><span class="syn">Rooftop chase</span></div></div>
+    <div class="glass palette"><div class="q"><svg class="k" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search or run a command…</div><div class="prow sel"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create element “revolver”<span class="ai">AI</span></div><div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/></svg>Add Sc 25 to Day 4</div><div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Generate call sheet<span class="ai">AI</span></div></div>
+    <div class="dock"><span class="sp"></span><div class="tx">Detected prop <b>“antique revolver”</b> in Sc 25 — add to Props &amp; flag armourer?</div><span class="go">Review</span></div>
+  </div>
+</div>
+
+<div class="sectitle">Light</div>
+
+<!-- CLAY -->
+<div class="card clay">
+  <div class="caption lt"><div class="nm"><span class="chip"></span>Clay &amp; Sage · glass<span class="mode">Light</span></div>
+    <div class="cc">White "liquid glass" over warm clay, sage &amp; peach light. Airy and artisanal — the friendliest, most daylight-friendly of the set.</div></div>
+  <div class="stage">
+    <div class="blob" style="width:250px;height:250px;background:#e0a072;left:-50px;top:-40px;opacity:.6"></div>
+    <div class="blob" style="width:230px;height:230px;background:#9cb98f;right:-55px;top:30px;opacity:.55"></div>
+    <div class="blob" style="width:210px;height:210px;background:#f0c8a8;left:105px;bottom:-70px;opacity:.6"></div>
+    <div class="grain" style="opacity:.18"></div>
+    <div class="glass chrome"><div class="wordmark"><span class="d"></span>StudioFlow</div><div class="navlite"><span class="on">Breakdown</span><span>Schedule</span><span>Budget</span></div><div class="spacer"></div><button class="primary"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strips"><div class="strip"><span class="sc">24</span><span class="ie">INT/D</span><span class="syn">Kitchen — morning</span></div><div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span></div><div class="strip"><span class="sc">26</span><span class="ie">EXT/N</span><span class="syn">Rooftop chase</span></div></div>
+    <div class="glass palette"><div class="q"><svg class="k" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Search or run a command…</div><div class="prow sel"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create element “revolver”<span class="ai">AI</span></div><div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/></svg>Add Sc 25 to Day 4</div><div class="prow"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Generate call sheet<span class="ai">AI</span></div></div>
+    <div class="dock"><span class="sp"></span><div class="tx">Detected prop <b>“antique revolver”</b> in Sc 25 — add to Props &amp; flag armourer?</div><span class="go">Review</span></div>
+  </div>
+</div>
+
+<div class="note"><b>Reading the four:</b> Tungsten is the most "movie", Phosphor the most restrained/technical, Umber the cosiest dark, Clay the friendliest light. Remember this is the <em>chrome</em> — under it, breakdown grids &amp; tables stay opaque for legibility. Tell me a favourite (or a dark+light pairing, e.g. <b>Umber dark + Clay light</b>, or <b>Tungsten dark + Clay light</b>) and how heavy you want the frost, and I'll refine that one to final and start the spec.</div>
+
+</body>
+</html>

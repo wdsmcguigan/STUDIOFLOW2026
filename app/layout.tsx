@@ -18,11 +18,19 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  return (
-    <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body className={inter.className}>{children}</body>
-      </html>
-    </ClerkProvider>
+  const content = (
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>{children}</body>
+    </html>
   )
+
+  // Only mount Clerk when a publishable key is configured. This keeps auth
+  // fully intact in environments that set the key, while allowing the app
+  // (e.g. the public landing page) to build and render in preview
+  // environments where Clerk keys aren't available.
+  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    return content
+  }
+
+  return <ClerkProvider>{content}</ClerkProvider>
 }

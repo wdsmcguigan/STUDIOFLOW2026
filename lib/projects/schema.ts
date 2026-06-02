@@ -15,11 +15,13 @@ export const createProjectInput = z.object({
 });
 export type CreateProjectInput = z.infer<typeof createProjectInput>;
 
+// TODO: add updateProjectInput when the update operation is implemented (later phase)
+
 export const project = z.object({
-  id: z.string().uuid(),
-  owner_id: z.string().uuid(),
+  id: z.uuid(),
+  owner_id: z.uuid(),
   title: z.string(),
-  status: z.string(),
+  status: z.string(), // intentionally loose: DB column is text; read-side must not throw on unknown values
   created_at: z.string(),
   updated_at: z.string(),
 });

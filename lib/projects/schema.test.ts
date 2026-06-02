@@ -17,4 +17,14 @@ describe("createProjectInput", () => {
     expect(parsed.title).toBe("Untitled");
     expect(parsed.status).toBe("development");
   });
+
+  it("rejects a title over 200 characters", () => {
+    const result = createProjectInput.safeParse({ title: "a".repeat(201) });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an unknown status", () => {
+    const result = createProjectInput.safeParse({ title: "X", status: "limbo" });
+    expect(result.success).toBe(false);
+  });
 });

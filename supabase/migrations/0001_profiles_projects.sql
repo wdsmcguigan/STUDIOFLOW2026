@@ -12,7 +12,8 @@ create policy "own profile - select" on public.profiles
 create policy "own profile - upsert" on public.profiles
   for insert with check (auth.uid() = id);
 create policy "own profile - update" on public.profiles
-  for update using (auth.uid() = id);
+  for update using (auth.uid() = id)
+  with check (auth.uid() = id);
 
 -- auto-create a profile when a user signs up
 create function public.handle_new_user()
@@ -35,7 +36,7 @@ create table public.projects (
   title text not null,
   status text not null default 'development',
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now()  -- NOTE: not auto-bumped; add a moddatetime trigger when UPDATE is first used
 );
 
 alter table public.projects enable row level security;
@@ -45,6 +46,12 @@ create policy "owner - select" on public.projects
 create policy "owner - insert" on public.projects
   for insert with check (auth.uid() = owner_id);
 create policy "owner - update" on public.projects
-  for update using (auth.uid() = owner_id);
+  for update using (auth.uid() = owner_id)
+  with check (auth.uid() = owner_id);
 create policy "owner - delete" on public.projects
   for delete using (auth.uid() = owner_id);
+
+-- Data API access for signed-in users; RLS policies above still gate every row.
+-- anon is intentionally omitted (all policies require auth.uid()).
+grant select, insert, update, delete on public.profiles to authenticated;
+grant select, insert, update, delete on public.projects to authenticated;

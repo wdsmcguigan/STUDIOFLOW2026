@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StudioFlow — Cinematic Palette Explorations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font-display:'Bricolage Grotesque',sans-serif;--font-ui:'Hanken Grotesk',system-ui,sans-serif;--font-mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#070809;color:#eef1f5;font-family:var(--font-ui);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;padding:18px 14px 70px}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+h1.page{font-family:var(--font-display);font-weight:800;font-size:25px;letter-spacing:-.5px;margin-bottom:5px}
+p.lede{color:rgba(238,241,245,.45);font-size:13px;margin-bottom:8px;line-height:1.5}
+
+/* Each card is fully self-themed via local vars (incl. tinted neutrals) */
+.card{border:1px solid var(--line-2);border-radius:18px;overflow:hidden;margin-bottom:18px;background:var(--bg);
+  --line:rgba(255,255,255,.07);--line-2:rgba(255,255,255,.13);--tx:#f3f5f8;--tx-2:rgba(243,245,248,.6);--tx-3:rgba(243,245,248,.38)}
+.card *{}
+.head{padding:15px 16px 13px;border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+.head::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 140% at 100% 0%, var(--brand-soft), transparent 60%);pointer-events:none}
+.head .nm{font-family:var(--font-display);font-weight:800;font-size:19px;letter-spacing:-.3px;display:flex;align-items:center;gap:10px;position:relative}
+.head .nm .chip{width:13px;height:13px;border-radius:4px;background:var(--brand);box-shadow:0 0 14px var(--brand)}
+.head .nm .rec{margin-left:auto;font-size:9.5px;font-weight:800;color:var(--brand);background:var(--brand-soft);border:1px solid var(--brand-line);border-radius:20px;padding:3px 9px;letter-spacing:.4px}
+.head .cc{color:var(--tx-3);font-size:11.5px;margin-top:4px;position:relative;line-height:1.45}
+.head .cc b{color:var(--tx-2)}
+
+.swatches{display:flex;gap:0;border-bottom:1px solid var(--line)}
+.sw{flex:1;height:46px;display:flex;align-items:flex-end;padding:5px 7px;font-size:8.5px;font-weight:700;letter-spacing:.4px;color:rgba(0,0,0,.55);text-transform:uppercase}
+.sw.dk{color:rgba(255,255,255,.7)}
+
+.demo{padding:13px}
+.ladder{display:flex;gap:6px;margin-bottom:13px}
+.ladder div{flex:1;height:30px;border-radius:6px;border:1px solid var(--line);display:grid;place-items:center;font-size:8px;color:var(--tx-3)}
+.bar{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.navpill{display:flex;align-items:center;gap:8px;background:var(--s3);border-radius:8px;padding:7px 11px;font-weight:600;font-size:12.5px;position:relative}
+.navpill::before{content:"";position:absolute;left:-1px;top:6px;bottom:6px;width:3px;border-radius:3px;background:var(--brand)}
+.navpill .ic{width:14px;height:14px;color:var(--brand)}
+.spacer{flex:1}
+.primary{background:var(--brand);color:var(--brand-ink);border:0;border-radius:8px;padding:8px 13px;font-weight:800;font-size:12.5px;font-family:var(--font-ui);display:flex;align-items:center;gap:6px}
+.strip{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:8px;padding:9px 11px;margin-bottom:9px}
+.strip .sc{font-family:var(--font-mono);font-weight:600;font-size:12px}
+.strip .ie{font-size:9px;font-weight:700;color:var(--tx-2);letter-spacing:.5px}
+.strip .syn{flex:1;font-size:12.5px}
+.tagdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ai);margin-right:5px}
+.aitag{font-size:10px;font-weight:800;color:var(--ai);background:var(--ai-soft);border:1px solid var(--ai-line);border-radius:6px;padding:2px 8px}
+.sugg{display:flex;align-items:flex-start;gap:10px;background:var(--ai-soft);border:1px solid var(--ai-line);border-radius:11px;padding:11px 12px;font-size:12.5px;line-height:1.4}
+.sugg .sp{width:9px;height:9px;border-radius:50%;background:var(--ai);box-shadow:0 0 10px var(--ai);margin-top:3px;flex:none}
+.sugg b{color:var(--tx)}
+.statusrow{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+.st{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px}
+.st.ok{color:#34d399;background:rgba(52,211,153,.13);border:1px solid rgba(52,211,153,.3)}
+.st.wn{color:#fbbf24;background:rgba(251,191,36,.13);border:1px solid rgba(251,191,36,.3)}
+.st.er{color:var(--err,#f87171);background:var(--err-soft,rgba(248,113,113,.13));border:1px solid var(--err-line,rgba(248,113,113,.3))}
+svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+.note{color:rgba(238,241,245,.4);font-size:12px;line-height:1.65;margin-top:8px;border-top:1px solid rgba(255,255,255,.08);padding-top:16px}
+.note b{color:rgba(238,241,245,.62)}
+.sectitle{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:rgba(238,241,245,.35);font-weight:700;margin:22px 2px 12px}
+
+/* ============ PALETTE DEFINITIONS ============ */
+/* 1. TUNGSTEN & ARC */
+.tungsten{--bg:#0b0a08;--s1:#13110e;--s2:#1a1713;--s3:#221d18;
+  --brand:#ffb23e;--brand-ink:#1d1402;--brand-soft:rgba(255,178,62,.15);--brand-line:rgba(255,178,62,.36);
+  --ai:#34d6e6;--ai-soft:rgba(52,214,230,.13);--ai-line:rgba(52,214,230,.36)}
+/* 2. COPPER & PATINA */
+.copper{--bg:#0d0b09;--s1:#15110e;--s2:#1c1714;--s3:#241d18;
+  --brand:#dd8a52;--brand-ink:#1d0f05;--brand-soft:rgba(221,138,82,.15);--brand-line:rgba(221,138,82,.36);
+  --ai:#56c4a4;--ai-soft:rgba(86,196,164,.13);--ai-line:rgba(86,196,164,.34)}
+/* 3. SODIUM VAPOR */
+.sodium{--bg:#0c0906;--s1:#14100b;--s2:#1b1610;--s3:#241d15;
+  --brand:#ff8a3d;--brand-ink:#1f0d02;--brand-soft:rgba(255,138,61,.15);--brand-line:rgba(255,138,61,.36);
+  --ai:#5fe3c8;--ai-soft:rgba(95,227,200,.13);--ai-line:rgba(95,227,200,.34)}
+/* 4. SAFELIGHT */
+.safelight{--bg:#0b090a;--s1:#131012;--s2:#1a1517;--s3:#231b1e;
+  --brand:#f15c62;--brand-ink:#26060a;--brand-soft:rgba(241,92,98,.15);--brand-line:rgba(241,92,98,.36);
+  --ai:#86b0ff;--ai-soft:rgba(134,176,255,.13);--ai-line:rgba(134,176,255,.36);
+  --err:#ff3b3b;--err-soft:rgba(255,59,59,.14);--err-line:rgba(255,59,59,.4)}
+/* 5. MAGIC HOUR */
+.magic{--bg:#0c0a0d;--s1:#14111a;--s2:#1a1622;--s3:#221d2c;
+  --brand:#ff9e6d;--brand-ink:#241003;--brand-soft:rgba(255,158,109,.15);--brand-line:rgba(255,158,109,.36);
+  --ai:#a08bff;--ai-soft:rgba(160,139,255,.15);--ai-line:rgba(160,139,255,.38)}
+/* 6. PHOSPHOR / SCOPES */
+.phosphor{--bg:#08090b;--s1:#0e1013;--s2:#13161a;--s3:#191d22;
+  --brand:#e8dab8;--brand-ink:#1a1505;--brand-soft:rgba(232,218,184,.13);--brand-line:rgba(232,218,184,.32);
+  --ai:#4fe08c;--ai-soft:rgba(79,224,140,.12);--ai-line:rgba(79,224,140,.34)}
+</style>
+</head>
+<body>
+
+<h1 class="page">Cinematic palette explorations</h1>
+<p class="lede">Six identities pulled from the language of film — not accents bolted onto grey. Each tints the whole charcoal surface ladder, owns a colour the competition doesn't, and keeps <b style="color:#34d399">green</b>/<b style="color:#fbbf24">amber</b>/<b style="color:#f87171">red</b> reserved for status. Just scroll.</p>
+
+<!-- 1 TUNGSTEN & ARC -->
+<div class="card tungsten">
+  <div class="head">
+    <div class="nm"><span class="chip"></span>Tungsten &amp; Arc<span class="rec">Top pick</span></div>
+    <div class="cc"><b>3200K vs 5600K.</b> The cinematographer's core duality: warm tungsten gold is the brand; cool arc-lamp cyan is the AI layer. Colour temperature literally is the concept.</div>
+  </div>
+  <div class="swatches">
+    <div class="sw" style="background:#ffb23e">Brand</div>
+    <div class="sw dk" style="background:#34d6e6;color:#04181c">AI</div>
+    <div class="sw dk" style="background:#1a1713">Surface</div>
+    <div class="sw dk" style="background:#0b0a08">Base</div>
+  </div>
+  <div class="demo">
+    <div class="ladder"><div style="background:#0b0a08">base</div><div style="background:#13110e">s1</div><div style="background:#1a1713">s2</div><div style="background:#221d18">s3</div></div>
+    <div class="bar"><div class="navpill"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div><div class="spacer"></div><button class="primary"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span><span class="aitag">AI</span></div>
+    <div class="sugg"><span class="sp"></span><div>Detected prop <b>"antique revolver"</b> in Sc 25 → add to <b>Props</b>?</div></div>
+    <div class="statusrow"><span class="st ok">Confirmed</span><span class="st wn">Weather watch</span><span class="st er">Over budget</span></div>
+  </div>
+</div>
+
+<!-- 2 COPPER & PATINA -->
+<div class="card copper">
+  <div class="head">
+    <div class="nm"><span class="chip"></span>Copper &amp; Patina</div>
+    <div class="cc"><b>Vintage glass &amp; oxidised brass.</b> A muted metallic copper — sophisticated, not a primary crayon — paired with verdigris green. Reads premium / boutique post-house.</div>
+  </div>
+  <div class="swatches">
+    <div class="sw" style="background:#dd8a52">Brand</div>
+    <div class="sw dk" style="background:#56c4a4;color:#04201a">AI</div>
+    <div class="sw dk" style="background:#1c1714">Surface</div>
+    <div class="sw dk" style="background:#0d0b09">Base</div>
+  </div>
+  <div class="demo">
+    <div class="ladder"><div style="background:#0d0b09">base</div><div style="background:#15110e">s1</div><div style="background:#1c1714">s2</div><div style="background:#241d18">s3</div></div>
+    <div class="bar"><div class="navpill"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div><div class="spacer"></div><button class="primary"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span><span class="aitag">AI</span></div>
+    <div class="sugg"><span class="sp"></span><div>Detected prop <b>"antique revolver"</b> in Sc 25 → add to <b>Props</b>?</div></div>
+    <div class="statusrow"><span class="st ok">Confirmed</span><span class="st wn">Weather watch</span><span class="st er">Over budget</span></div>
+  </div>
+</div>
+
+<!-- 3 SODIUM VAPOR -->
+<div class="card sodium">
+  <div class="head">
+    <div class="nm"><span class="chip"></span>Sodium Vapor</div>
+    <div class="cc"><b>Night exterior under street lamps.</b> The unmistakable sodium-orange of a film night-ext, with a mercury-vapor mint for AI. Hot, atmospheric, instantly "movie."</div>
+  </div>
+  <div class="swatches">
+    <div class="sw" style="background:#ff8a3d">Brand</div>
+    <div class="sw dk" style="background:#5fe3c8;color:#04201a">AI</div>
+    <div class="sw dk" style="background:#1b1610">Surface</div>
+    <div class="sw dk" style="background:#0c0906">Base</div>
+  </div>
+  <div class="demo">
+    <div class="ladder"><div style="background:#0c0906">base</div><div style="background:#14100b">s1</div><div style="background:#1b1610">s2</div><div style="background:#241d15">s3</div></div>
+    <div class="bar"><div class="navpill"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div><div class="spacer"></div><button class="primary"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span><span class="aitag">AI</span></div>
+    <div class="sugg"><span class="sp"></span><div>Detected prop <b>"antique revolver"</b> in Sc 25 → add to <b>Props</b>?</div></div>
+    <div class="statusrow"><span class="st ok">Confirmed</span><span class="st wn">Weather watch</span><span class="st er">Over budget</span></div>
+  </div>
+</div>
+
+<!-- 4 SAFELIGHT -->
+<div class="card safelight">
+  <div class="head">
+    <div class="nm"><span class="chip"></span>Safelight</div>
+    <div class="cc"><b>The darkroom &amp; the "recording" light.</b> A bold cine-rose owns a lane <em>nobody</em> in this market touches; a separate true-red stays for errors, and a cool film-blue carries AI.</div>
+  </div>
+  <div class="swatches">
+    <div class="sw dk" style="background:#f15c62">Brand</div>
+    <div class="sw dk" style="background:#86b0ff;color:#06122e">AI</div>
+    <div class="sw dk" style="background:#1a1517">Surface</div>
+    <div class="sw dk" style="background:#0b090a">Base</div>
+  </div>
+  <div class="demo">
+    <div class="ladder"><div style="background:#0b090a">base</div><div style="background:#131012">s1</div><div style="background:#1a1517">s2</div><div style="background:#231b1e">s3</div></div>
+    <div class="bar"><div class="navpill"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div><div class="spacer"></div><button class="primary"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span><span class="aitag">AI</span></div>
+    <div class="sugg"><span class="sp"></span><div>Detected prop <b>"antique revolver"</b> in Sc 25 → add to <b>Props</b>?</div></div>
+    <div class="statusrow"><span class="st ok">Confirmed</span><span class="st wn">Weather watch</span><span class="st er">Over budget</span></div>
+  </div>
+</div>
+
+<!-- 5 MAGIC HOUR -->
+<div class="card magic">
+  <div class="head">
+    <div class="nm"><span class="chip"></span>Magic Hour</div>
+    <div class="cc"><b>The most beloved light in film.</b> Golden-hour coral against dusk violet — warm, romantic, premium. The neutrals carry a faint violet cast you can feel.</div>
+  </div>
+  <div class="swatches">
+    <div class="sw" style="background:#ff9e6d">Brand</div>
+    <div class="sw dk" style="background:#a08bff;color:#10082e">AI</div>
+    <div class="sw dk" style="background:#1a1622">Surface</div>
+    <div class="sw dk" style="background:#0c0a0d">Base</div>
+  </div>
+  <div class="demo">
+    <div class="ladder"><div style="background:#0c0a0d">base</div><div style="background:#14111a">s1</div><div style="background:#1a1622">s2</div><div style="background:#221d2c">s3</div></div>
+    <div class="bar"><div class="navpill"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div><div class="spacer"></div><button class="primary"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span><span class="aitag">AI</span></div>
+    <div class="sugg"><span class="sp"></span><div>Detected prop <b>"antique revolver"</b> in Sc 25 → add to <b>Props</b>?</div></div>
+    <div class="statusrow"><span class="st ok">Confirmed</span><span class="st wn">Weather watch</span><span class="st er">Over budget</span></div>
+  </div>
+</div>
+
+<!-- 6 PHOSPHOR -->
+<div class="card phosphor">
+  <div class="head">
+    <div class="nm"><span class="chip"></span>Phosphor / Scopes</div>
+    <div class="cc"><b>The colour suite &amp; the waveform monitor.</b> Near-monochrome with a champagne signal-white brand and an electric phosphor-green AI — the most restrained, "pro-tool / colourist" option.</div>
+  </div>
+  <div class="swatches">
+    <div class="sw" style="background:#e8dab8">Brand</div>
+    <div class="sw dk" style="background:#4fe08c;color:#04140a">AI</div>
+    <div class="sw dk" style="background:#13161a">Surface</div>
+    <div class="sw dk" style="background:#08090b">Base</div>
+  </div>
+  <div class="demo">
+    <div class="ladder"><div style="background:#08090b">base</div><div style="background:#0e1013">s1</div><div style="background:#13161a">s2</div><div style="background:#191d22">s3</div></div>
+    <div class="bar"><div class="navpill"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div><div class="spacer"></div><button class="primary"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+    <div class="strip"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn"><span class="tagdot"></span>Hallway confrontation</span><span class="aitag">AI</span></div>
+    <div class="sugg"><span class="sp"></span><div>Detected prop <b>"antique revolver"</b> in Sc 25 → add to <b>Props</b>?</div></div>
+    <div class="statusrow"><span class="st ok">Confirmed</span><span class="st wn">Weather watch</span><span class="st er">Over budget</span></div>
+  </div>
+</div>
+
+<div class="note">
+  <b>How to react:</b> name the one that makes you feel something — or mix &amp; match ("Tungsten brand but Phosphor's green for AI", "Copper but push the brand redder", "Magic Hour with cooler neutrals"). I can also dial saturation/brightness on any of these, or chase a totally different reference (Ektachrome, blueprint cyanotype, neon-noir, IMAX black). This is the fun part — we iterate until one clicks, then it goes in the spec.
+</div>
+
+</body>
+</html>

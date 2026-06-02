@@ -186,3 +186,64 @@ Each phase ships its full stack (UI → API → service → DB → tests) togeth
 - ORM/data-access choice (Drizzle vs Supabase-generated types) — to settle at Phase 0 planning.
 - Managed job runner: Inngest vs Trigger.dev vs Vercel Workflow — to settle at Phase 2 planning.
 - Exact seed roles/permissions matrix for Phase 6.
+
+---
+
+## 11. References & Prior Art
+
+> Full competitor pain-point research with citations lives in the companion doc: `2026-06-02-studioflow-competitor-research.md`. The original open-source survey is `documentation/Open Source Production App Modules.md`. **Caveat on that survey:** most of its tools (Gaffer, Natron, xSTUDIO, OpenRV, OCIO/OIIO, Rez) are heavy desktop C++/Python apps for VFX *finishing facilities* — not embeddable in a web app, and out of scope for the pre-pro core. Only the subset flagged "now-relevant" below applies to v1.
+
+### 11.1 Standards & formats (support / interop)
+
+| Format | Use | Notes |
+|---|---|---|
+| **Fountain** (fountain.io) | Primary script import/export | Plain-text screenplay markup; can't carry dual-dialogue/pagination — store those as first-class fields, don't infer from Fountain |
+| **Final Draft XML (.fdx)** | Primary script import | *The* interchange format; carries scene boundaries + who's in each scene |
+| **Movie Magic (.mmb / .mms)** | Budget/schedule import (later) | Proprietary; round-trip via MMB's XML export + Category/Account/SubAccount/Set code mask |
+| **AICP** | Commercial budget template (later) | Standard topsheet for commercials |
+| **OpenTimelineIO** (Apache 2.0) | Editorial interchange (later/adjacent) | For when post/editorial modules arrive; not pre-pro |
+
+### 11.2 Open-source libraries & projects to use or reference
+
+**Now-relevant (pre-pro core):**
+- **Fountain parsers** (e.g. `fountain-js` and similar) — script ingestion; reference for parsing heuristics.
+- **PDF generation** — `@react-pdf/renderer`, `pdfmake`, or HTML→PDF via Playwright/Puppeteer (`pdf-lib` for low-level) — call sheets & reports.
+- **TanStack Table + TanStack Virtual** — the budget grid and large stripboard/DOOD tables.
+- **dnd-kit** — stripboard drag-reorder, breakdown tagging.
+- **SunCalc** — sunrise/sunset for call sheets (+ a weather API).
+- **Vercel AI SDK** — LLM abstraction (provider-swappable).
+- **Inngest / Trigger.dev / Vercel Workflow** — durable, cancellable, concurrent async jobs.
+- **Supabase · Drizzle · Zod · shadcn/ui · Tauri** — the core stack.
+
+**Adjacent / later:**
+- **CGWire Kitsu / Zou / Gazu** (AGPL/LGPL) — VFX/animation *production tracking*. Schema doesn't fit pre-pro (no breakdown/stripboard/budget-accounts), but a strong reference if we ever add VFX-task tracking.
+- **AYON / OpenPype** — pipeline orchestration (note: AYON is now Functional Source License — restricts SaaS wrappers; OpenPype archive is Apache 2.0).
+- **FFmpeg / ffmpegio** — transcode/proxy/dailies (later).
+- **PowerSync · ElectricSQL · Turso (libSQL)** — Postgres↔local-SQLite sync engines for the *offline* phase; all bolt onto our Postgres, so offline is an addition, not a rewrite.
+
+### 11.3 Commercial products — what to learn from each
+
+| Product | Reference it for | Watch out for (their pain points) |
+|---|---|---|
+| **StudioBinder** | All-in-one UX, stripboard, call sheets, breakdown UX | Scene-number-keyed tags (data loss on renumber); no real budget; modules feel siloed |
+| **Movie Magic Scheduling** | Stripboard + Day-Out-of-Days conventions | Offline/single-seat; no .mms import elsewhere; "DOOD do-not-match" bugs |
+| **Movie Magic Budgeting** | Account structure, Fringes/Globals/Groups, the budgeting mental model | Proprietary format; no actuals connection; steep learning curve |
+| **Filmustage** | AI script breakdown UX, re-breakdown-on-revision | AI false positives; "more work to fix than do by hand" if unreviewed |
+| **Yamdu** | Granular per-position permissions, auto-revoke at wrap (model our Phase 6 on this) | Limited data export; breakdown-accuracy gaps drop items from call sheets; gates cross-project contacts (don't copy that) |
+| **Celtx / Studiovity** | Indie all-in-one positioning, pricing | Fragile imports/data loss; clunky module transitions; export limits |
+| **Set Hero / Croogloo** | Call-sheet distribution, read-receipts/confirmation | Clunky/buggy mobile; no offline |
+| **Saturation.io** | Modern cloud budgeting + cost-report (committed/actual/EFC) | Reference for the accounting-grade *later* phase |
+| **Wrapbook** | Payroll/accounting integration model | The actuals/payroll side we interop with, not rebuild |
+| **Frame.io** | Media review/annotation | The review/dailies phase, later |
+
+### 11.4 Key pain-point sources (most load-bearing)
+
+- Scene-number tag loss: [StudioBinder — scene numbering](https://www.studiobinder.com/blog/scene-numbering/) · [why tagged elements disappear](https://support.studiobinder.com/en/articles/3009805-why-did-my-tagged-elements-disappear)
+- Splitting scenes / auto-reorder deletes day breaks: [split a scene](https://www.studiobinder.com/blog/how-to-split-a-scene-for-scheduling/) · [auto-reorder](https://support.studiobinder.com/en/articles/419884-auto-reorder-scene-strips)
+- AI breakdown false positives: [noamkroll Filmustage review](https://noamkroll.com/review-testing-filmustages-ai-powered-script-breakdown-app-on-a-feature-film/)
+- Day-Out-of-Days rules: [EP — MMS DOOD Do-Not-Match](https://entertainmentpartners.my.site.com/s/article/Movie-Magic-Scheduling-MMS-Day-Out-of-Days-DOOD-Do-Not-Match) · [DOOD Rules](https://mms-docs.ep.com/DayOutofDays/DOODRules.html)
+- Budget Fringes/Globals/Groups + caps: [MMB apply tools](https://mmb-docs.ep.com/ApplyTools/Apply_Tools_Overview.html) · [MMB fringes](https://mmb-docs.ep.com/Setup/fringes.html)
+- Estimate→committed→actual / cost reports: [Saturation cost report](https://saturation.io/blog/production-cost-report)
+- Character aliases/merge: [StudioBinder merge cast](https://support.studiobinder.com/en/articles/419692-how-to-merge-multiple-cast-members)
+- Fountain data-loss caveats: [fountain.io FAQ](https://fountain.io/faq/)
+- Granular permissions model: [Yamdu collaborate](https://yamdu.com/en/communicate-and-collaborate/)

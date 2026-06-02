@@ -5,14 +5,20 @@ import { createClient } from "@/lib/supabase/client";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
+    setError(null);
     const supabase = createClient();
-    await supabase.auth.signInWithOtp({
+    const { error: otpError } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     });
+    if (otpError) {
+      setError(otpError.message);
+      return;
+    }
     setSent(true);
   }
 
@@ -23,6 +29,7 @@ export default function LoginPage() {
         <p>Check your email for a sign-in link.</p>
       ) : (
         <form onSubmit={signIn} className="flex flex-col gap-3">
+          {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
           <input
             type="email"
             required

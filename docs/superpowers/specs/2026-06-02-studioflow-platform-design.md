@@ -41,7 +41,7 @@ StudioFlow is a film/media **pre-production platform** built around one idea: a 
 
 **In v1 (the usable milestone after Phase 5):** Script import (Fountain/FDX) → AI-assisted breakdown → stripboard scheduling with conflict detection & Day-Out-of-Days → budget (estimator + actuals ledger + POs + lock/baseline) → call-sheet generation. Granular permissions (Phase 6). Tauri desktop + mobile-read views (Phase 7).
 
-**Designed-but-deferred (seams exist, build later):** tax-incentive/qualified-spend, multi-currency, version-diff tag reconciliation across drafts, realtime co-editing, dependency edges as stored data, on-set offline sync.
+**Designed-but-deferred (seams exist, build later):** tax-incentive/qualified-spend, multi-currency, version-diff tag reconciliation across drafts, realtime co-editing, dependency edges as stored data, on-set offline sync, **closeout & delivery / chain-of-title** (a compliance-tracking + binder-generation layer over the graph — see Phase 8+ and `docs/reference/closeout-checklist.pdf`).
 
 **Explicitly out of scope:** the PRD-V3 ambitions (petabyte version control, 200+ integrations, VR, blockchain, etc.).
 
@@ -142,7 +142,7 @@ Each phase ships its full stack (UI → API → service → DB → tests) togeth
 - **⭐ Milestone: the v1 you actually use** — full loop on real data, "change a scene → everything updates" enforced by integration tests.
 - **Phase 6 — Granular permissions + collaboration.** Roles, per-module grants, per-field sensitivity (RLS), time-bounded access, audit log. *Sequenced after the loop is usable solo.*
 - **Phase 7 — Desktop + mobile-read + polish.** Tauri packaging, on-set mobile call-sheet views, port remaining v0 UI.
-- **Phase 8+ — Later horizons.** Accounting-grade (incentives/currency), realtime co-edit, Storyboard/Previs reading the graph, on-set offline sync.
+- **Phase 8+ — Later horizons.** Accounting-grade (incentives/currency), realtime co-edit, Storyboard/Previs reading the graph, on-set offline sync, **Closeout & Delivery / Chain-of-Title** (legal/deliverables compliance tracker + binder-PDF generation, hanging off existing graph entities — Person/Location/Organization/Element/Project; purely additive, no migration of existing tables; requirements in `docs/reference/closeout-checklist.pdf`).
 
 ### 6.4 What makes modules interconnect (and stay that way)
 

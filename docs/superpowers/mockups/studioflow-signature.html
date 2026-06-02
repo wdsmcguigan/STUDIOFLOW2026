@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StudioFlow — Signature Direction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--font-display:'Bricolage Grotesque',sans-serif;--font-ui:'Hanken Grotesk',system-ui,sans-serif;--font-mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0907;color:#eef1f5;font-family:var(--font-ui);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;padding:18px 14px 70px}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+h1.page{font-family:var(--font-display);font-weight:800;font-size:25px;letter-spacing:-.5px;margin-bottom:5px}
+.kicker{font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:#f4a93c;font-weight:800;margin-bottom:9px}
+p.lede{color:rgba(238,241,245,.5);font-size:13px;margin-bottom:6px;line-height:1.55}
+p.lede b{color:rgba(238,241,245,.78)}
+.sectitle{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:rgba(238,241,245,.4);font-weight:700;margin:26px 2px 13px;display:flex;align-items:center;gap:9px}
+.sectitle::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.09)}
+
+/* ---- app shell mock ---- */
+.frame{border-radius:18px;overflow:hidden;margin-bottom:16px;border:1px solid var(--line-2);box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.barlabel{padding:9px 13px;font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
+.barlabel .pill{font-size:9px;font-weight:800;letter-spacing:.5px;padding:2px 8px;border-radius:20px;background:var(--brand-soft);color:var(--brand-on,var(--brand));border:1px solid var(--brand-line)}
+.shell{display:flex;min-height:286px;background:var(--bg);position:relative}
+.shell::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:5;opacity:var(--grain,.5);mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* rail */
+.rail{width:158px;flex:none;background:var(--s1);border-right:1px solid var(--line);padding:13px 11px;display:flex;flex-direction:column;gap:3px}
+.brandmark{display:flex;align-items:center;gap:9px;margin-bottom:6px;padding:2px 4px 11px;border-bottom:1px solid var(--line);position:relative}
+.brandmark .gl{width:26px;height:26px;border-radius:8px;background:linear-gradient(140deg,var(--brand),var(--brand-2,var(--brand)));display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:13px;color:var(--brand-ink);box-shadow:0 4px 14px var(--brand-soft)}
+.brandmark .wm{font-family:var(--font-display);font-weight:800;font-size:14.5px;letter-spacing:-.3px;color:var(--tx)}
+.brandmark::after{content:"";position:absolute;left:4px;right:4px;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--brand),transparent);box-shadow:0 0 8px var(--brand);opacity:.9}
+.grp{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--tx-3);margin:11px 6px 4px}
+.nav{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;font-size:12px;font-weight:600;color:var(--tx-2);position:relative}
+.nav svg{width:15px;height:15px;flex:none}
+.nav.on{color:var(--brand-on,var(--brand));background:var(--brand-soft)}
+.nav.on::before{content:"";position:absolute;left:-11px;top:6px;bottom:6px;width:3px;border-radius:0 3px 3px 0;background:var(--brand);box-shadow:0 0 9px var(--brand)}
+
+/* main */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.top{display:flex;align-items:center;gap:10px;padding:13px 14px;border-bottom:1px solid var(--line)}
+.top h2{font-family:var(--font-display);font-weight:800;font-size:17px;letter-spacing:-.3px;color:var(--tx)}
+.top .sub{font-size:10.5px;color:var(--tx-3);margin-top:1px}
+.spacer{flex:1}
+.aichip{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:var(--ai-ink,var(--ai));background:var(--ai-soft);border:1px solid var(--ai-line);border-radius:20px;padding:5px 10px}
+.aichip .d{width:7px;height:7px;border-radius:50%;background:var(--ai);box-shadow:0 0 9px var(--ai)}
+.primary{background:var(--brand);color:var(--brand-ink);border:0;border-radius:9px;padding:8px 13px;font-weight:800;font-size:12px;font-family:var(--font-ui);display:flex;align-items:center;gap:6px;box-shadow:0 5px 14px var(--brand-soft)}
+.board{padding:12px 14px;display:flex;flex-direction:column;gap:7px}
+.row{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--line);border-left:3px solid var(--cat,#7fb0ff);border-radius:9px;padding:9px 11px}
+.row .sc{font-family:var(--font-mono);font-weight:700;font-size:12px;color:var(--tx)}
+.row .ie{font-size:8.5px;font-weight:700;color:var(--tx-2);letter-spacing:.4px;width:34px}
+.row .syn{flex:1;font-size:12px;color:var(--tx);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .pg{font-family:var(--font-mono);font-size:10.5px;color:var(--tx-3)}
+.tag{font-size:9px;font-weight:800;border-radius:5px;padding:2px 7px}
+.tag.ai{color:var(--ai-ink,var(--ai));background:var(--ai-soft);border:1px solid var(--ai-line)}
+.aibar{margin:2px 14px 14px;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;background:var(--ai-soft);border:1px solid var(--ai-line);box-shadow:0 0 26px var(--ai-glow,transparent)}
+.aibar .sp{width:10px;height:10px;border-radius:50%;background:var(--ai);box-shadow:0 0 13px var(--ai);flex:none}
+.aibar .tx{flex:1;font-size:11.5px;color:var(--tx);line-height:1.35}.aibar .tx b{font-weight:700}
+.aibar .go{font-size:9.5px;font-weight:800;color:var(--ai-ink,var(--ai));background:transparent;border:1px solid var(--ai-line);border-radius:8px;padding:5px 10px}
+svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---- dials ---- */
+.dials{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.dial{border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:13px;background:#120f0b}
+.dial h4{font-family:var(--font-display);font-weight:800;font-size:13px;margin-bottom:3px}
+.dial p{font-size:10.5px;color:rgba(238,241,245,.5);line-height:1.45;margin-bottom:11px}
+.demoChip{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:800;border-radius:9px;padding:7px 10px}
+.swrow{display:flex;gap:6px;margin-top:9px}
+.swrow i{width:26px;height:18px;border-radius:5px;border:1px solid rgba(255,255,255,.14)}
+.note{color:rgba(238,241,245,.42);font-size:12px;line-height:1.65;margin-top:18px;border-top:1px solid rgba(255,255,255,.08);padding-top:16px}
+.note b{color:rgba(238,241,245,.64)}
+
+/* THEME: dark = Umber/Tungsten */
+.dk{--bg:#14110c;--s1:#1a1610;--s2:#221c14;--s3:#2c2418;--line:rgba(255,236,205,.08);--line-2:rgba(255,236,205,.14);
+  --tx:#f3 ece1;--tx:#f3ece1;--tx-2:rgba(243,236,225,.62);--tx-3:rgba(243,236,225,.42);
+  --brand:#f4a93c;--brand-2:#e07a3a;--brand-ink:#1d1303;--brand-soft:rgba(244,169,60,.16);--brand-line:rgba(244,169,60,.36);
+  --ai:#7fcf8e;--ai-ink:#7fcf8e;--ai-soft:rgba(127,207,142,.16);--ai-line:rgba(127,207,142,.4);--grain:.55}
+/* THEME: light = Kraft/Clay */
+.lt{--bg:#efe7d8;--s1:#f8f1e4;--s2:#fcf7ee;--s3:#eadfcc;--line:rgba(64,46,24,.1);--line-2:rgba(64,46,24,.15);
+  --tx:#2d2418;--tx-2:rgba(45,36,24,.62);--tx-3:rgba(45,36,24,.42);
+  --brand:#bf6a2e;--brand-2:#d98a3f;--brand-ink:#fff;--brand-on:#a4541d;--brand-soft:rgba(191,106,46,.14);--brand-line:rgba(191,106,46,.34);
+  --ai:#5f8a55;--ai-ink:#436b3a;--ai-soft:rgba(95,138,85,.16);--ai-line:rgba(95,138,85,.36);--grain:.3}
+.lt .barlabel{color:#7a5a30}
+.dk .barlabel{color:#caa471}
+</style>
+</head>
+<body>
+
+<div class="kicker">Signature direction</div>
+<h1 class="page">Tungsten &amp; Sage</h1>
+<p class="lede">The common thread in everything you flagged: <b>warm earthy surfaces, a tungsten-amber brand, and a green that runs from calm sage to electric phosphor.</b> Made into one identity — a single world with the lights on or off — plus a few signature devices below.</p>
+
+<div class="sectitle">The pair — same world, lights off / on</div>
+
+<!-- DARK -->
+<div class="frame dk">
+  <div class="barlabel">Umber · dark<span class="pill">Default</span></div>
+  <div class="shell">
+    <div class="rail">
+      <div class="brandmark"><div class="gl">SF</div><div class="wm">StudioFlow</div></div>
+      <div class="grp">Develop</div>
+      <div class="nav"><svg viewBox="0 0 24 24"><path d="M5 3h14v18l-7-4-7 4z"/></svg>Script</div>
+      <div class="nav on"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div>
+      <div class="grp">Plan</div>
+      <div class="nav"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Schedule</div>
+      <div class="nav"><svg viewBox="0 0 24 24"><path d="M12 2v20M5 7h9a3 3 0 010 6H5"/></svg>Budget</div>
+      <div class="grp">Shoot</div>
+      <div class="nav"><svg viewBox="0 0 24 24"><path d="M4 4h16v12H4zM2 20h20"/></svg>Call Sheets</div>
+    </div>
+    <div class="main">
+      <div class="top"><div><h2>Breakdown</h2><div class="sub">NIGHTHAWK · 48 scenes</div></div><div class="spacer"></div><div class="aichip"><span class="d"></span>4 AI insights</div><button class="primary"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+      <div class="board">
+        <div class="row" style="--cat:#e0a04a"><span class="sc">24</span><span class="ie">INT/D</span><span class="syn">Kitchen — the morning after</span><span class="pg">6/8</span></div>
+        <div class="row" style="--cat:#7fcf8e"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn">Hallway confrontation</span><span class="tag ai">AI</span><span class="pg">1 2/8</span></div>
+        <div class="row" style="--cat:#6aa9e0"><span class="sc">26</span><span class="ie">EXT/N</span><span class="syn">Rooftop chase</span><span class="pg">3/8</span></div>
+      </div>
+      <div class="aibar"><span class="sp"></span><div class="tx">Detected prop <b>“antique revolver”</b> in Sc 25 — add to Props &amp; flag armourer?</div><span class="go">Review</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHT -->
+<div class="frame lt">
+  <div class="barlabel">Kraft · light<span class="pill">Daylight</span></div>
+  <div class="shell">
+    <div class="rail">
+      <div class="brandmark"><div class="gl">SF</div><div class="wm">StudioFlow</div></div>
+      <div class="grp">Develop</div>
+      <div class="nav"><svg viewBox="0 0 24 24"><path d="M5 3h14v18l-7-4-7 4z"/></svg>Script</div>
+      <div class="nav on"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Breakdown</div>
+      <div class="grp">Plan</div>
+      <div class="nav"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Schedule</div>
+      <div class="nav"><svg viewBox="0 0 24 24"><path d="M12 2v20M5 7h9a3 3 0 010 6H5"/></svg>Budget</div>
+      <div class="grp">Shoot</div>
+      <div class="nav"><svg viewBox="0 0 24 24"><path d="M4 4h16v12H4zM2 20h20"/></svg>Call Sheets</div>
+    </div>
+    <div class="main">
+      <div class="top"><div><h2>Breakdown</h2><div class="sub">NIGHTHAWK · 48 scenes</div></div><div class="spacer"></div><div class="aichip"><span class="d"></span>4 AI insights</div><button class="primary"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New</button></div>
+      <div class="board">
+        <div class="row" style="--cat:#c2873a"><span class="sc">24</span><span class="ie">INT/D</span><span class="syn">Kitchen — the morning after</span><span class="pg">6/8</span></div>
+        <div class="row" style="--cat:#5f8a55"><span class="sc">25</span><span class="ie">INT/N</span><span class="syn">Hallway confrontation</span><span class="tag ai">AI</span><span class="pg">1 2/8</span></div>
+        <div class="row" style="--cat:#4f80a8"><span class="sc">26</span><span class="ie">EXT/N</span><span class="syn">Rooftop chase</span><span class="pg">3/8</span></div>
+      </div>
+      <div class="aibar"><span class="sp"></span><div class="tx">Detected prop <b>“antique revolver”</b> in Sc 25 — add to Props &amp; flag armourer?</div><span class="go">Review</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="sectitle">Signature dials — opt in to taste</div>
+<div class="dials">
+
+  <div class="dial">
+    <h4 style="color:#7fcf8e">Calm Sage AI</h4>
+    <p>Organic, muted green. AI feels like a quiet collaborator. (Shown in the shells above.)</p>
+    <div class="demoChip" style="color:#7fcf8e;background:rgba(127,207,142,.14);border:1px solid rgba(127,207,142,.4)">✦ AI suggested 3 props</div>
+  </div>
+
+  <div class="dial">
+    <h4 style="color:#43f08a">Electric Phosphor AI</h4>
+    <p>Push the same green to a glowing scope/safelight signal. More energy, more “alive”.</p>
+    <div class="demoChip" style="color:#43f08a;background:rgba(67,240,138,.14);border:1px solid rgba(67,240,138,.5);box-shadow:0 0 20px rgba(67,240,138,.35)">✦ AI suggested 3 props</div>
+  </div>
+
+  <div class="dial">
+    <h4 style="color:#f4a93c">Tungsten filament</h4>
+    <p>A glowing amber hairline under the wordmark &amp; active rail — the signature “lit” detail. (On above.)</p>
+    <div style="position:relative;padding:9px 2px 12px;display:inline-block"><span style="font-family:var(--font-display);font-weight:800;font-size:15px;color:#f3ece1">StudioFlow</span><span style="position:absolute;left:0;right:0;bottom:6px;height:1px;background:linear-gradient(90deg,transparent,#f4a93c,transparent);box-shadow:0 0 8px #f4a93c"></span></div>
+  </div>
+
+  <div class="dial">
+    <h4 style="background:linear-gradient(90deg,#f4a93c,#e07a3a);-webkit-background-clip:text;background-clip:text;color:transparent">Ember duotone mark</h4>
+    <p>Logo &amp; primary buttons use an amber→ember gradient — warmer, more premium than a flat fill.</p>
+    <div style="display:flex;align-items:center;gap:9px;margin-top:2px"><div style="width:30px;height:30px;border-radius:9px;background:linear-gradient(140deg,#f4a93c,#e07a3a);display:grid;place-items:center;font-family:var(--font-display);font-weight:800;color:#1d1303;box-shadow:0 4px 14px rgba(244,169,60,.3)">SF</div><button style="background:linear-gradient(140deg,#f4a93c,#e07a3a);color:#1d1303;border:0;border-radius:9px;padding:8px 13px;font-weight:800;font-size:12px;font-family:var(--font-ui)">New scene</button></div>
+  </div>
+
+  <div class="dial">
+    <h4 style="color:#caa471">Paper / film grain</h4>
+    <p>A barely-there grain on surfaces gives an analog, crafted feel — the opposite of sterile SaaS. (On above; subtle.)</p>
+    <div class="swrow"><i style="background:#14110c"></i><i style="background:#221c14"></i><i style="background:#efe7d8"></i><i style="background:#eadfcc"></i></div>
+  </div>
+
+  <div class="dial">
+    <h4 style="color:#e0a04a">Category spines</h4>
+    <p>INT/EXT &amp; day-part coded on the left spine of every strip — your eye reads the board by colour before words.</p>
+    <div class="swrow"><i style="background:#e0a04a"></i><i style="background:#6aa9e0"></i><i style="background:#7fcf8e"></i><i style="background:#c97a7a"></i></div>
+  </div>
+
+</div>
+
+<div class="note"><b>This is the most “us” thing we’ve made:</b> a warm, lit, slightly analog studio tool — amber tungsten + living green — that nobody else in the category owns (they’re all cool blue/grey). Tell me <b>(1)</b> sage or phosphor for AI, <b>(2)</b> flat or ember-duotone brand, <b>(3)</b> grain on or off — and I’ll bake exactly that into the final tokens + the design-foundation spec. If it’s close but not quite, point at the one dial that’s off and I’ll keep tuning.</div>
+
+</body>
+</html>

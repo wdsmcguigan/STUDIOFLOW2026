@@ -1,10 +1,25 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Bricolage_Grotesque, Hanken_Grotesk, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
 import { ClerkProvider } from "@clerk/nextjs"
 
-const inter = Inter({ subsets: ["latin"] })
+// StudioFlow "Tungsten & Sage" type system
+const fontDisplay = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+})
+const fontUi = Hanken_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-ui",
+  display: "swap",
+})
+const fontMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "StudioFlow | Next-Generation Production Platform",
@@ -20,8 +35,12 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body className={inter.className}>{children}</body>
+      <html
+        lang="en"
+        suppressHydrationWarning
+        className={`dark ${fontDisplay.variable} ${fontUi.variable} ${fontMono.variable}`}
+      >
+        <body className="font-sans">{children}</body>
       </html>
     </ClerkProvider>
   )

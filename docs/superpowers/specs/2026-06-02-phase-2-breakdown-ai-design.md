@@ -23,13 +23,31 @@ Tag scenes with breakdown **Elements** — manually first, then **AI-assisted** 
 ## Data model (additions to the graph)
 
 - **Element** — `{ id, project_id, category, name, description, estimated_cost, vendor_org_id?, created_at }`. Project-level catalog; reused across scenes.
-- **SceneElement** — the Scene↔Element link. `{ id, scene_id, element_id, provenance ('auto'|'manual'), confidence (0–1, null if manual), status ('suggested'|'confirmed'|'rejected'), text_anchor_start, text_anchor_end, segment_id? (null until Phase 3), quantity?, notes }`. **Downstream queries (schedule/budget) filter `status='confirmed'` only.**
+- **SceneElement** — the Scene↔Element link. `{ id, scene_id (UUID — never the scene number), element_id, provenance ('auto'|'manual'), confidence (0–1, null if manual), status ('suggested'|'confirmed'|'rejected'), text_anchor (robust quote+context — see §"Tag anchoring & re-anchoring"), anchor_state ('anchored'|'needs_review'|'orphaned'), segment_id? (null until Phase 3), quantity?, notes }`. **Downstream queries (schedule/budget) filter `status='confirmed'` only.**
 - **Character** — `{ id, project_id, primary_name, aliases (text[]), description }`. A merge operation re-points all links from the absorbed Character to the survivor.
 - **Cast presence link** — when an Element/Character attaches to a Scene as cast, the link carries `presence_type ('speaking'|'silent_featured'|'background'|'voice_only')`. (Modeled as a typed `SceneElement` for the Cast category, or a dedicated `SceneCharacter` join — decide at plan time; the *attribute* is the requirement.)
 - **Department mapping** — `category → department` mapping table (configurable per project), so an element's category routes to the right department (and later, budget account).
 - **Job** — `{ id, project_id, type ('breakdown'|'import'|...), status ('queued'|'running'|'succeeded'|'failed'|'cancelled'), progress (int), params (jsonb), result (jsonb), error, created_by, created_at }`. Idempotent; powers the activity/queue panel.
 
 ---
+
+## Tag anchoring & re-anchoring (the Phase 1 ↔ Phase 2 seam)
+
+> Added from the 2026-06-02 deep-dive. This is where Phase 1's reconciliation and Phase 2's breakdown meet — and the mechanism that lets breakdown **survive script rewrites**, the core differentiator.
+
+### The anchor model
+A `SceneElement.text_anchor` is a **quote + surrounding context**, not raw character offsets:
+`{ quote, prefix, suffix }` (e.g. `{ quote: "chrome revolver", prefix: "sets down a ", suffix: ". Outside" }`), optionally with a last-known offset as a hint. This survives edits elsewhere in the scene. The tag is bound to the **scene UUID**, never the scene number.
+
+### Re-anchoring on re-import
+When Phase 1 reconciliation matches an incoming (modified) scene to an existing scene UUID, each existing tag on that scene is re-located against the new text, with three outcomes (`anchor_state`):
+- **`anchored` (exact):** the quote is still present → silently re-attach, update offsets. The common case.
+- **`needs_review` (fuzzy):** text shifted/edited → best fuzzy match above a threshold (e.g. `SequenceMatcher`/diff-match-patch) → re-attach but flag "verify."
+- **`orphaned`:** the tagged text was deleted/rewritten → keep the tag but anchor-less → flag for review (keep / re-tag / remove).
+
+**`status` is preserved through re-anchoring** — a human-`confirmed` tag is never silently demoted because prose moved. Unchanged scenes carry tags untouched; new scenes start empty (run AI); OMITTED scenes keep tags in history (excluded downstream because the scene is omitted).
+
+> This depends on Phase 1's stable-Scene-UUID + reconciliation model. After a re-import that modifies scenes, the user may re-run AI breakdown on just the modified scenes to catch new elements — idempotent upsert + the confirm-gate make that safe.
 
 ## Manual breakdown (build first)
 
@@ -62,6 +80,7 @@ Tag scenes with breakdown **Elements** — manually first, then **AI-assisted** 
 
 - **Manual tagging:** select-to-tag creates a correct `SceneElement` (anchor, provenance, confirmed); element catalog + character CRUD.
 - **Character merge:** merging re-points all links to the survivor; aliases union.
+- **Tag re-anchoring:** given a scene with confirmed tags, re-import a modified version → assert exact-anchor tags silently re-attach (`anchored`), shifted text fuzzy-matches and flags (`needs_review`), and deleted-text tags become `orphaned` for review — with `confirmed` status preserved throughout.
 - **AI orchestration with a mocked LLM:** a fake model returns a fixed structured payload → asserts SceneElements created as `auto`/`suggested` with correct anchors; **idempotent** on re-run.
 - **Downstream gate:** a query simulating schedule/budget consumption returns only `confirmed` links (suggested excluded).
 - **Job lifecycle:** enqueue → running → cancel → state transitions; concurrency bound respected.

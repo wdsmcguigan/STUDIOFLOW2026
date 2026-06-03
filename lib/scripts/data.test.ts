@@ -2,6 +2,8 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/db/types";
 import { parseFountain } from "@/lib/scripts/fountain";
+import { reconcile } from "@/lib/scripts/reconcile";
+import { fuzzyMatcher } from "@/lib/scripts/reconcile";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -131,4 +133,176 @@ describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("scripts/scenes data lay
     });
     expect(error).not.toBeNull(); // RLS with-check denies the foreign version FK
   });
+
+  /** Seed a script with 2 scenes (DINER unchanged target, PARKING LOT removal target). */
+  async function seedTwoSceneScript(title: string) {
+    const v1 = `INT. DINER - DAY
+
+Mary sits alone.
+
+EXT. PARKING LOT - NIGHT
+
+A car idles.
+`;
+    const { data: script } = await alice
+      .from("scripts")
+      .insert({ project_id: aliceProject, title })
+      .select("id")
+      .single();
+    const scriptId = script!.id as string;
+    const { data: me } = await alice.auth.getUser();
+    await alice.from("script_versions").insert({
+      script_id: scriptId, label: "v1", source_format: "fountain", raw_source: v1, created_by: me.user!.id,
+    });
+    const firstRows = parseFountain(v1).map((p) => ({
+      project_id: aliceProject, script_id: scriptId, ordinal: p.ordinal,
+      scene_number: p.sceneNumber, int_ext: p.intExt, location_slug: p.locationSlug,
+      time_of_day: p.timeOfDay, synopsis: p.synopsis, page_eighths: p.pageEighths, status: "active" as const,
+    }));
+    const { data: firstScenes } = await alice.from("scenes").insert(firstRows).select("id, location_slug, ordinal");
+    const dinerId = firstScenes!.find((s) => s.location_slug === "DINER")!.id;
+    return { scriptId, dinerId };
+  }
+
+  // Re-import: DINER unchanged, PARKING LOT removed, a new ROOFTOP scene added.
+  const V2 = `INT. DINER - DAY
+
+Mary sits alone.
+
+INT. ROOFTOP - NIGHT
+
+Wind howls.
+`;
+
+  it("staging a re-import snapshots the version + diff but mutates NO scenes (gate)", async () => {
+    const { scriptId } = await seedTwoSceneScript("StageNoMutateTest");
+
+    // Snapshot the live scene set before staging.
+    const before = await alice
+      .from("scenes")
+      .select("id, location_slug, status")
+      .eq("script_id", scriptId)
+      .order("ordinal", { ascending: true });
+
+    // STAGE: creates the version row + computes the diff, but writes no scenes.
+    const staged = await stageReimportForTest(alice, {
+      projectId: aliceProject,
+      scriptId,
+      rawSource: V2,
+      parsed: parseFountain(V2),
+    });
+    expect(staged.versionId).toBeDefined();
+    expect(staged.diff.length).toBeGreaterThan(0);
+
+    // The live scene set is byte-for-byte unchanged: no new ROOFTOP, no OMITTED.
+    const after = await alice
+      .from("scenes")
+      .select("id, location_slug, status")
+      .eq("script_id", scriptId)
+      .order("ordinal", { ascending: true });
+    expect(after.data).toEqual(before.data);
+    expect((after.data ?? []).some((s) => s.location_slug === "ROOFTOP")).toBe(false);
+    expect((after.data ?? []).every((s) => s.status === "active")).toBe(true);
+  });
+
+  it("confirm (apply) preserves matched scene ids, marks removed OMITTED, and adds new scenes", async () => {
+    const { scriptId, dinerId } = await seedTwoSceneScript("ReimportTest");
+
+    // STAGE first (snapshot the version + diff; no mutation yet).
+    const staged = await stageReimportForTest(alice, {
+      projectId: aliceProject,
+      scriptId,
+      rawSource: V2,
+      parsed: parseFountain(V2),
+    });
+
+    // CONFIRM → APPLY the staged version (re-reads raw_source, re-reconciles, writes).
+    const result = await applyReconciledImportForTest(alice, {
+      projectId: aliceProject,
+      scriptId,
+      scriptVersionId: staged.versionId,
+    });
+
+    // DINER kept its id.
+    expect(result.matchedSceneIds).toContain(dinerId);
+    // PARKING LOT is OMITTED, not deleted.
+    const { data: parking } = await alice
+      .from("scenes")
+      .select("status, location_slug")
+      .eq("script_id", scriptId)
+      .eq("location_slug", "PARKING LOT")
+      .single();
+    expect(parking!.status).toBe("omitted");
+    // ROOFTOP added as active.
+    const { data: rooftop } = await alice
+      .from("scenes")
+      .select("status")
+      .eq("script_id", scriptId)
+      .eq("location_slug", "ROOFTOP")
+      .single();
+    expect(rooftop!.status).toBe("active");
+    // A scene_source was written for the matched scene against the staged version.
+    const { data: src } = await alice
+      .from("scene_sources")
+      .select("scene_id")
+      .eq("script_version_id", staged.versionId)
+      .eq("scene_id", dinerId);
+    expect((src ?? []).length).toBe(1);
+
+    // touch the imported symbols so lint doesn't flag them as unused in this test
+    void reconcile; void fuzzyMatcher;
+  });
+
+  it("refuses to apply the same staged version twice (idempotency gate)", async () => {
+    const { scriptId } = await seedTwoSceneScript("DoubleApplyTest");
+    const staged = await stageReimportForTest(alice, {
+      projectId: aliceProject,
+      scriptId,
+      rawSource: V2,
+      parsed: parseFountain(V2),
+    });
+
+    // First apply succeeds.
+    await applyReconciledImportForTest(alice, {
+      projectId: aliceProject,
+      scriptId,
+      scriptVersionId: staged.versionId,
+    });
+
+    // Second apply of the SAME staged version is rejected (would otherwise
+    // duplicate the new scene and collide on the scene_sources PK).
+    await expect(
+      applyReconciledImportForTest(alice, {
+        projectId: aliceProject,
+        scriptId,
+        scriptVersionId: staged.versionId,
+      }),
+    ).rejects.toThrow(/already been applied/i);
+
+    // And the scene set was not duplicated: exactly one active ROOFTOP.
+    const { data: rooftops } = await alice
+      .from("scenes")
+      .select("id")
+      .eq("script_id", scriptId)
+      .eq("location_slug", "ROOFTOP")
+      .eq("status", "active");
+    expect((rooftops ?? []).length).toBe(1);
+  });
 });
+
+async function stageReimportForTest(
+  client: SupabaseClient<Database>,
+  args: { projectId: string; scriptId: string; rawSource: string; parsed: ReturnType<typeof parseFountain> },
+) {
+  const { stageReimport } = await import("@/lib/scripts/data");
+  return stageReimport(client, args);
+}
+
+async function applyReconciledImportForTest(
+  client: SupabaseClient<Database>,
+  args: { projectId: string; scriptId: string; scriptVersionId: string },
+) {
+  // Mirror of applyReconciledImport using the test client (same logic, injected client).
+  const { reconcileAndApply } = await import("@/lib/scripts/data");
+  return reconcileAndApply(client, args);
+}

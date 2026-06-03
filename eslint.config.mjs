@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Legacy prototype code — not part of the current project
     "legacy/**",
+    // Rust build artifacts (gitignored; linting them only produces noise)
+    "src-tauri/target/**",
   ]),
 ]);
 

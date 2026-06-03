@@ -16,6 +16,12 @@ export function ProjectList({ projects }: { projects: Project[] }) {
               <p className="text-sm text-muted-foreground">{p.status}</p>
             </Card>
           </Link>
+          <a
+            href={`/dashboard/${p.id}/import`}
+            className="mt-2 inline-block text-sm underline"
+          >
+            Import script
+          </a>
         </li>
       ))}
     </ul>

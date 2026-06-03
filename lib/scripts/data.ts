@@ -1,0 +1,589 @@
+// Convention: parse-on-read. Every read returns Zod-validated domain types (the one typed contract);
+// writes parse their input. (Resolves Phase 0 carry-forward #3.)
+
+import { createClient } from "@/lib/supabase/server";
+import {
+  createScriptInput,
+  script,
+  scriptVersion,
+  scene,
+  revision,
+  type CreateScriptInput,
+  type Script,
+  type ScriptVersion,
+  type Scene,
+  type ParsedScene,
+  type Revision,
+} from "@/lib/scripts/schema";
+import { contentHash } from "@/lib/scripts/hash";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/db/types";
+import { parseFountain } from "@/lib/scripts/fountain";
+import { reconcile, fuzzyMatcher, type ExistingScene } from "@/lib/scripts/reconcile";
+import type { SceneDiff } from "@/lib/scripts/schema";
+import { markConflicts } from "@/lib/scripts/conflict";
+
+export async function createScript(input: CreateScriptInput): Promise<Script> {
+  const parsed = createScriptInput.parse(input);
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("scripts")
+    .insert({ project_id: parsed.projectId, title: parsed.title })
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message, { cause: error });
+  return script.parse(data);
+}
+
+export async function listScripts(projectId: string): Promise<Script[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("scripts")
+    .select("*")
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message, { cause: error });
+  return data.map((row) => script.parse(row));
+}
+
+export async function getScript(scriptId: string): Promise<Script | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("scripts")
+    .select("*")
+    .eq("id", scriptId)
+    .maybeSingle();
+  if (error) throw new Error(error.message, { cause: error });
+  return data ? script.parse(data) : null;
+}
+
+export async function listScenes(scriptId: string): Promise<Scene[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("scenes")
+    .select("*")
+    .eq("script_id", scriptId)
+    .order("ordinal", { ascending: true });
+  if (error) throw new Error(error.message, { cause: error });
+  return data.map((row) => scene.parse(row));
+}
+
+export async function getScene(sceneId: string): Promise<Scene | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("scenes")
+    .select("*")
+    .eq("id", sceneId)
+    .maybeSingle();
+  if (error) throw new Error(error.message, { cause: error });
+  return data ? scene.parse(data) : null;
+}
+
+export async function getLatestVersion(scriptId: string): Promise<ScriptVersion | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("script_versions")
+    .select("*")
+    .eq("script_id", scriptId)
+    .order("imported_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message, { cause: error });
+  return data ? scriptVersion.parse(data) : null;
+}
+
+/** First import: create the version snapshot + all scenes as new + their sources. */
+export async function applyFirstImport(args: {
+  projectId: string;
+  scriptId: string;
+  label: string;
+  rawSource: string;
+  parsed: ParsedScene[];
+}): Promise<{ versionId: string; sceneIds: string[] }> {
+  const { projectId, scriptId, label, rawSource, parsed } = args;
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("Not authenticated");
+
+  const { data: version, error: versionError } = await supabase
+    .from("script_versions")
+    .insert({
+      script_id: scriptId,
+      label,
+      source_format: "fountain",
+      raw_source: rawSource,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
+  if (versionError) throw new Error(versionError.message, { cause: versionError });
+
+  const sceneRows = parsed.map((p) => ({
+    project_id: projectId,
+    script_id: scriptId,
+    ordinal: p.ordinal,
+    scene_number: p.sceneNumber,
+    int_ext: p.intExt,
+    location_slug: p.locationSlug,
+    time_of_day: p.timeOfDay,
+    synopsis: p.synopsis,
+    page_eighths: p.pageEighths,
+    status: "active" as const,
+  }));
+  const { data: scenes, error: scenesError } = await supabase
+    .from("scenes")
+    .insert(sceneRows)
+    .select("id, ordinal");
+  if (scenesError) throw new Error(scenesError.message, { cause: scenesError });
+
+  const byOrdinal = new Map(scenes.map((s) => [s.ordinal, s.id]));
+  const sourceRows = parsed.map((p) => ({
+    scene_id: byOrdinal.get(p.ordinal)!,
+    script_version_id: version.id,
+    content_hash: contentHash(p),
+    text_anchor_start: p.textAnchorStart,
+    text_anchor_end: p.textAnchorEnd,
+  }));
+  const { error: sourcesError } = await supabase.from("scene_sources").insert(sourceRows);
+  if (sourcesError) throw new Error(sourcesError.message, { cause: sourcesError });
+
+  return {
+    versionId: version.id,
+    sceneIds: parsed.map((p) => byOrdinal.get(p.ordinal)!),
+  };
+}
+
+type DbClient = SupabaseClient<Database>;
+
+const STANDARD_REVISIONS: Array<{ name: string; color: string }> = [
+  { name: "White", color: "#FFFFFF" },
+  { name: "Blue", color: "#3B82F6" },
+  { name: "Pink", color: "#EC4899" },
+  { name: "Yellow", color: "#EAB308" },
+  { name: "Green", color: "#22C55E" },
+  { name: "Goldenrod", color: "#DAA520" },
+  { name: "Buff", color: "#F0DC82" },
+  { name: "Salmon", color: "#FA8072" },
+  { name: "Cherry", color: "#DE3163" },
+  { name: "Tan", color: "#D2B48C" },
+];
+
+/** Seed the standard FDX-style revision set for a project; White is active. Idempotent. */
+export async function seedRevisions(client: DbClient, projectId: string): Promise<void> {
+  const { data: existing, error: readErr } = await client
+    .from("revisions")
+    .select("id")
+    .eq("project_id", projectId)
+    .limit(1);
+  if (readErr) throw new Error(readErr.message, { cause: readErr });
+  if ((existing ?? []).length > 0) return; // already seeded
+
+  const rows = STANDARD_REVISIONS.map((r, i) => ({
+    project_id: projectId,
+    name: r.name,
+    color: r.color,
+    ordinal: i,
+    active: i === 0, // White active
+  }));
+  const { error } = await client.from("revisions").insert(rows);
+  if (error) throw new Error(error.message, { cause: error });
+}
+
+export async function listRevisions(client: DbClient, projectId: string): Promise<Revision[]> {
+  const { data, error } = await client
+    .from("revisions")
+    .select("*")
+    .eq("project_id", projectId)
+    .order("ordinal", { ascending: true });
+  if (error) throw new Error(error.message, { cause: error });
+  return (data ?? []).map((r) => revision.parse(r));
+}
+
+export async function getActiveRevision(client: DbClient, projectId: string): Promise<Revision | null> {
+  const { data, error } = await client
+    .from("revisions")
+    .select("*")
+    .eq("project_id", projectId)
+    .eq("active", true)
+    .maybeSingle();
+  if (error) throw new Error(error.message, { cause: error });
+  return data ? revision.parse(data) : null;
+}
+
+/** Make exactly one revision active for the project. */
+export async function setActiveRevision(
+  client: DbClient,
+  projectId: string,
+  revisionId: string,
+): Promise<void> {
+  const { error: clearErr } = await client
+    .from("revisions")
+    .update({ active: false })
+    .eq("project_id", projectId);
+  if (clearErr) throw new Error(clearErr.message, { cause: clearErr });
+  const { error: setErr } = await client
+    .from("revisions")
+    .update({ active: true })
+    .eq("id", revisionId);
+  if (setErr) throw new Error(setErr.message, { cause: setErr });
+}
+
+/** Assemble the matcher's ExistingScene view: active scenes + their latest content_hash. */
+export async function loadExistingScenes(
+  client: DbClient,
+  scriptId: string,
+): Promise<ExistingScene[]> {
+  const { data, error } = await client
+    .from("scenes")
+    .select(
+      "id, scene_number, number_locked, int_ext, location_slug, time_of_day, ordinal, scene_sources(content_hash, script_version_id)",
+    )
+    .eq("script_id", scriptId)
+    .eq("status", "active")
+    .order("ordinal", { ascending: true });
+  if (error) throw new Error(error.message, { cause: error });
+
+  // Pick each scene's most-recent source hash deterministically. A scene that
+  // survived multiple imports has several scene_sources; PostgREST gives no
+  // ordering guarantee on the embedded rows, so "last in array" is unstable and
+  // would make tier-2 classification (and stage-vs-apply determinism) flaky.
+  // Resolve recency via the owning version's imported_at.
+  const { data: versions, error: versionsError } = await client
+    .from("script_versions")
+    .select("id, imported_at")
+    .eq("script_id", scriptId);
+  if (versionsError) throw new Error(versionsError.message, { cause: versionsError });
+  const importedAt = new Map((versions ?? []).map((v) => [v.id, v.imported_at]));
+
+  return (data ?? []).map((row) => {
+    const sources = (row.scene_sources ?? []) as Array<{
+      content_hash: string;
+      script_version_id: string;
+    }>;
+    const latest = sources
+      .slice()
+      .sort((a, b) =>
+        (importedAt.get(b.script_version_id) ?? "").localeCompare(
+          importedAt.get(a.script_version_id) ?? "",
+        ),
+      )[0];
+    const contentHashValue = latest?.content_hash ?? "";
+    return {
+      sceneId: row.id,
+      sceneNumber: row.scene_number,
+      numberLocked: row.number_locked,
+      contentHash: contentHashValue,
+      intExt: row.int_ext,
+      locationSlug: row.location_slug,
+      timeOfDay: row.time_of_day,
+      bodyText: "", // body is reconstructed from raw_source only when needed; hash drives tier 2
+      ordinal: row.ordinal,
+    };
+  });
+}
+
+/** Load in-app divergences for the active revision and upgrade any matched entry
+ *  that was also edited in-app to a `conflict`. Returns the resolved diff plus the
+ *  recorded in-app prose per scene id (for the side-by-side in the review screen). */
+async function markConflictsForReview(
+  client: DbClient,
+  projectId: string,
+  diff: SceneDiff[],
+): Promise<{ resolved: SceneDiff[]; inAppByScene: Record<string, string> }> {
+  const active = await getActiveRevision(client, projectId);
+  if (!active) return { resolved: diff, inAppByScene: {} };
+
+  const { data: edits, error: editErr } = await client
+    .from("scene_revision_changes")
+    .select("scene_id")
+    .eq("revision_id", active.id)
+    .eq("change_kind", "modified");
+  if (editErr) throw new Error(editErr.message, { cause: editErr });
+  const editedIds = new Set((edits ?? []).map((e) => e.scene_id));
+  const resolved = markConflicts(diff, editedIds);
+
+  // Recorded in-app prose for each conflicting scene (synopsis stands in for prose in Phase 1).
+  const inAppByScene: Record<string, string> = {};
+  const conflictIds = resolved
+    .filter((d) => d.classification === "conflict" && d.sceneId)
+    .map((d) => d.sceneId as string);
+  if (conflictIds.length > 0) {
+    const { data: rows, error: proseErr } = await client
+      .from("scenes")
+      .select("id, synopsis")
+      .in("id", conflictIds);
+    if (proseErr) throw new Error(proseErr.message, { cause: proseErr });
+    for (const r of rows ?? []) inAppByScene[r.id] = r.synopsis ?? "";
+  }
+  return { resolved, inAppByScene };
+}
+
+/** STAGE (re-import step 1): create the immutable version snapshot (storing
+ *  raw_source) and compute the structured diff against the live scenes —
+ *  WITHOUT mutating any `scenes`/`scene_sources`. The `script_versions` row IS
+ *  the stage; apply happens later at confirm via `reconcileAndApply`. Returns
+ *  the new versionId, the diff, and the in-app prose-per-scene map for review. */
+export async function stageReimport(
+  client: DbClient,
+  args: { projectId: string; scriptId: string; rawSource: string; parsed: ParsedScene[] },
+): Promise<{ versionId: string; diff: SceneDiff[]; inAppByScene: Record<string, string> }> {
+  const { projectId, scriptId, rawSource, parsed } = args;
+  const {
+    data: { user },
+    error: authError,
+  } = await client.auth.getUser();
+  if (authError || !user) throw new Error("Not authenticated");
+
+  // Immutable snapshot of the imported draft. No scene mutation here.
+  const { data: version, error: versionError } = await client
+    .from("script_versions")
+    .insert({
+      script_id: scriptId,
+      label: `v${Date.now()}`,
+      source_format: "fountain",
+      raw_source: rawSource,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
+  if (versionError) throw new Error(versionError.message, { cause: versionError });
+  const versionId = version.id as string;
+
+  // Compute (but do not apply) the diff via the shared read-only helper, which
+  // re-parses from the just-stored raw_source so stage and apply are identical.
+  // `parsed` is accepted for caller symmetry but recomputed inside for determinism.
+  void parsed;
+  const { diff, inAppByScene } = await computeStagedDiff(client, {
+    projectId,
+    scriptId,
+    scriptVersionId: versionId,
+  });
+  return { versionId, diff, inAppByScene };
+}
+
+/** READ-ONLY: recompute the diff for an already-staged version (no version
+ *  creation, no scene mutation). Used by `stageReimport` and by the review page
+ *  to render the gate. Re-parses the stored raw_source and reconciles; the diff
+ *  is deterministic so it equals what apply will do. `markConflicts` (Task 14)
+ *  upgrades matched scenes also edited in-app and populates `inAppByScene`;
+ *  until Task 14 lands this is the plain reconcile output with an empty map. */
+export async function computeStagedDiff(
+  client: DbClient,
+  args: { projectId: string; scriptId: string; scriptVersionId: string },
+): Promise<{ diff: SceneDiff[]; inAppByScene: Record<string, string> }> {
+  const { projectId, scriptId, scriptVersionId } = args;
+  const { data: version, error: versionError } = await client
+    .from("script_versions")
+    .select("raw_source")
+    .eq("id", scriptVersionId)
+    .single();
+  if (versionError) throw new Error(versionError.message, { cause: versionError });
+
+  const parsed = parseFountain(version.raw_source);
+  const existing = await loadExistingScenes(client, scriptId);
+  const diff = reconcile(existing, parsed, fuzzyMatcher);
+  const { resolved, inAppByScene } = await markConflictsForReview(client, projectId, diff);
+  return { diff: resolved, inAppByScene };
+}
+
+/** APPLY (re-import step 2, invoked at confirm): given a previously-staged
+ *  version id, re-read its stored raw_source, re-reconcile deterministically,
+ *  and apply non-destructively:
+ *  - matched scenes keep their UUID (update slug/body-derived fields, add a new scene_source);
+ *  - removed scenes are set status='omitted' (never deleted);
+ *  - new scenes are inserted as active. Returns the resolved diff + matched ids.
+ *  Recomputing the diff here is sound because parse + reconcile are pure. */
+export async function reconcileAndApply(
+  client: DbClient,
+  args: { projectId: string; scriptId: string; scriptVersionId: string },
+): Promise<{ versionId: string; diff: SceneDiff[]; matchedSceneIds: string[] }> {
+  const { projectId, scriptId, scriptVersionId } = args;
+  const {
+    data: { user },
+    error: authError,
+  } = await client.auth.getUser();
+  if (authError || !user) throw new Error("Not authenticated");
+
+  // Re-read the staged version's stored source and re-parse/-reconcile.
+  const { data: version, error: versionError } = await client
+    .from("script_versions")
+    .select("id, script_id, raw_source")
+    .eq("id", scriptVersionId)
+    .single();
+  if (versionError) throw new Error(versionError.message, { cause: versionError });
+  // Integrity: the staged version must belong to the script we're applying to,
+  // so a (legitimately owned) version from another script can't be cross-applied.
+  if (version.script_id !== scriptId) {
+    throw new Error("Staged version does not belong to this script");
+  }
+  const versionId = version.id as string;
+
+  // Idempotency gate: a freshly STAGED version has zero scene_sources (stage
+  // writes none). If any already reference it, this version was applied — refuse
+  // to re-run so confirm is not double-applied (which would duplicate new scenes
+  // and collide on the scene_sources composite PK).
+  const { count: appliedCount, error: appliedError } = await client
+    .from("scene_sources")
+    .select("scene_id", { count: "exact", head: true })
+    .eq("script_version_id", scriptVersionId);
+  if (appliedError) throw new Error(appliedError.message, { cause: appliedError });
+  if ((appliedCount ?? 0) > 0) {
+    throw new Error("This staged version has already been applied");
+  }
+
+  const parsed = parseFountain(version.raw_source);
+
+  const existing = await loadExistingScenes(client, scriptId);
+  const diff = reconcile(existing, parsed, fuzzyMatcher);
+
+  const { resolved } = await markConflictsForReview(client, projectId, diff);
+
+  const activeRevision = await getActiveRevision(client, projectId);
+
+  const recordChange = async (sceneId: string, kind: "added" | "modified" | "omitted") => {
+    if (!activeRevision) return;
+    const { error } = await client.from("scene_revision_changes").upsert(
+      { scene_id: sceneId, revision_id: activeRevision.id, change_kind: kind },
+      { onConflict: "scene_id,revision_id" },
+    );
+    if (error) throw new Error(error.message, { cause: error });
+  };
+
+  const matchedSceneIds: string[] = [];
+
+  // Apply each diff entry against the staged version.
+  for (const entry of resolved) {
+    if (
+      (entry.classification === "unchanged" ||
+        entry.classification === "modified" ||
+        entry.classification === "conflict") &&
+      entry.sceneId &&
+      entry.parsed
+    ) {
+      matchedSceneIds.push(entry.sceneId);
+      const p = entry.parsed;
+      const { error: upErr } = await client
+        .from("scenes")
+        .update({
+          ordinal: p.ordinal,
+          int_ext: p.intExt,
+          location_slug: p.locationSlug,
+          time_of_day: p.timeOfDay,
+          synopsis: p.synopsis,
+          page_eighths: p.pageEighths,
+          status: "active",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", entry.sceneId);
+      if (upErr) throw new Error(upErr.message, { cause: upErr });
+      const { error: srcErr } = await client.from("scene_sources").insert({
+        scene_id: entry.sceneId,
+        script_version_id: versionId,
+        content_hash: contentHash(p),
+        text_anchor_start: p.textAnchorStart,
+        text_anchor_end: p.textAnchorEnd,
+      });
+      if (srcErr) throw new Error(srcErr.message, { cause: srcErr });
+      if (entry.classification !== "unchanged") {
+        await recordChange(entry.sceneId, "modified");
+      }
+    } else if (entry.classification === "new" && entry.parsed) {
+      const p = entry.parsed;
+      const { data: created, error: insErr } = await client
+        .from("scenes")
+        .insert({
+          project_id: projectId,
+          script_id: scriptId,
+          ordinal: p.ordinal,
+          scene_number: p.sceneNumber,
+          int_ext: p.intExt,
+          location_slug: p.locationSlug,
+          time_of_day: p.timeOfDay,
+          synopsis: p.synopsis,
+          page_eighths: p.pageEighths,
+          status: "active",
+        })
+        .select("id")
+        .single();
+      if (insErr) throw new Error(insErr.message, { cause: insErr });
+      const { error: srcErr } = await client.from("scene_sources").insert({
+        scene_id: created.id,
+        script_version_id: versionId,
+        content_hash: contentHash(p),
+        text_anchor_start: p.textAnchorStart,
+        text_anchor_end: p.textAnchorEnd,
+      });
+      if (srcErr) throw new Error(srcErr.message, { cause: srcErr });
+      await recordChange(created.id, "added");
+    } else if (entry.classification === "removed" && entry.sceneId) {
+      const { error: omitErr } = await client
+        .from("scenes")
+        .update({ status: "omitted", updated_at: new Date().toISOString() })
+        .eq("id", entry.sceneId);
+      if (omitErr) throw new Error(omitErr.message, { cause: omitErr });
+      await recordChange(entry.sceneId, "omitted");
+    }
+  }
+
+  return { versionId, diff: resolved, matchedSceneIds };
+}
+
+/** In-app edit write path: edit a scene's production metadata (and/or prose-derived
+ *  fields), recording the change into the active revision set. Operates on the
+ *  stable scene UUID, so the edit survives later re-imports (anchored to the scene). */
+export async function updateSceneInApp(
+  client: DbClient,
+  args: {
+    projectId: string;
+    sceneId: string;
+    patch: Partial<{
+      int_ext: string | null;
+      location_slug: string | null;
+      time_of_day: string | null;
+      synopsis: string | null;
+      script_day: string | null;
+      scene_number: string | null;
+      number_locked: boolean;
+      status: "active" | "omitted";
+    }>;
+  },
+): Promise<Scene> {
+  const { projectId, sceneId, patch } = args;
+  const { data, error } = await client
+    .from("scenes")
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq("id", sceneId)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message, { cause: error });
+
+  const active = await getActiveRevision(client, projectId);
+  if (active) {
+    const { error: changeErr } = await client.from("scene_revision_changes").upsert(
+      { scene_id: sceneId, revision_id: active.id, change_kind: "modified" },
+      { onConflict: "scene_id,revision_id" },
+    );
+    if (changeErr) throw new Error(changeErr.message, { cause: changeErr });
+  }
+  return scene.parse(data);
+}
+
+/** Production wrapper for the APPLY step (confirm): apply a previously-staged
+ *  version using the SSR cookie client. */
+export async function applyReconciledImport(args: {
+  projectId: string;
+  scriptId: string;
+  scriptVersionId: string;
+}): Promise<{ versionId: string; diff: SceneDiff[]; matchedSceneIds: string[] }> {
+  const supabase = await createClient();
+  return reconcileAndApply(supabase as unknown as DbClient, args);
+}

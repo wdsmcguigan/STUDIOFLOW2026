@@ -9,7 +9,10 @@ export function CreateProjectForm({
 }) {
   return (
     <form action={action} className="flex gap-2">
-      <Input name="title" placeholder="Project title" required />
+      <label htmlFor="project-title" className="sr-only">
+        Project title
+      </label>
+      <Input id="project-title" name="title" placeholder="Project title" required />
       <Button type="submit">Create</Button>
     </form>
   );

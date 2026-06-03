@@ -1,7 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createScript, applyFirstImport, listScripts, seedRevisions, stageReimport, applyReconciledImport, getScript } from "@/lib/scripts/data";
+import { createScript, applyFirstImport, seedRevisions, stageReimport, applyReconciledImport, getScript } from "@/lib/scripts/data";
 import { parseFountain } from "@/lib/scripts/fountain";
 
 export async function importScriptAction(projectId: string, formData: FormData) {
@@ -30,9 +30,6 @@ export async function importScriptAction(projectId: string, formData: FormData) 
   }
   redirect(`/dashboard/${projectId}/scripts/${scriptId}`);
 }
-
-// Re-export so the import page can list existing scripts without another import.
-export { listScripts };
 
 /** Re-import step 1: stage the version + compute the diff (no scene mutation),
  *  then send the user to the gated review screen. */

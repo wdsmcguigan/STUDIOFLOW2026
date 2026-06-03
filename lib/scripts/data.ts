@@ -7,11 +7,13 @@ import {
   script,
   scriptVersion,
   scene,
+  revision,
   type CreateScriptInput,
   type Script,
   type ScriptVersion,
   type Scene,
   type ParsedScene,
+  type Revision,
 } from "@/lib/scripts/schema";
 import { contentHash } from "@/lib/scripts/hash";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -160,6 +162,79 @@ export async function applyFirstImport(args: {
 }
 
 type DbClient = SupabaseClient<Database>;
+
+const STANDARD_REVISIONS: Array<{ name: string; color: string }> = [
+  { name: "White", color: "#FFFFFF" },
+  { name: "Blue", color: "#3B82F6" },
+  { name: "Pink", color: "#EC4899" },
+  { name: "Yellow", color: "#EAB308" },
+  { name: "Green", color: "#22C55E" },
+  { name: "Goldenrod", color: "#DAA520" },
+  { name: "Buff", color: "#F0DC82" },
+  { name: "Salmon", color: "#FA8072" },
+  { name: "Cherry", color: "#DE3163" },
+  { name: "Tan", color: "#D2B48C" },
+];
+
+/** Seed the standard FDX-style revision set for a project; White is active. Idempotent. */
+export async function seedRevisions(client: DbClient, projectId: string): Promise<void> {
+  const { data: existing, error: readErr } = await client
+    .from("revisions")
+    .select("id")
+    .eq("project_id", projectId)
+    .limit(1);
+  if (readErr) throw new Error(readErr.message, { cause: readErr });
+  if ((existing ?? []).length > 0) return; // already seeded
+
+  const rows = STANDARD_REVISIONS.map((r, i) => ({
+    project_id: projectId,
+    name: r.name,
+    color: r.color,
+    ordinal: i,
+    active: i === 0, // White active
+  }));
+  const { error } = await client.from("revisions").insert(rows);
+  if (error) throw new Error(error.message, { cause: error });
+}
+
+export async function listRevisions(client: DbClient, projectId: string): Promise<Revision[]> {
+  const { data, error } = await client
+    .from("revisions")
+    .select("*")
+    .eq("project_id", projectId)
+    .order("ordinal", { ascending: true });
+  if (error) throw new Error(error.message, { cause: error });
+  return (data ?? []).map((r) => revision.parse(r));
+}
+
+export async function getActiveRevision(client: DbClient, projectId: string): Promise<Revision | null> {
+  const { data, error } = await client
+    .from("revisions")
+    .select("*")
+    .eq("project_id", projectId)
+    .eq("active", true)
+    .maybeSingle();
+  if (error) throw new Error(error.message, { cause: error });
+  return data ? revision.parse(data) : null;
+}
+
+/** Make exactly one revision active for the project. */
+export async function setActiveRevision(
+  client: DbClient,
+  projectId: string,
+  revisionId: string,
+): Promise<void> {
+  const { error: clearErr } = await client
+    .from("revisions")
+    .update({ active: false })
+    .eq("project_id", projectId);
+  if (clearErr) throw new Error(clearErr.message, { cause: clearErr });
+  const { error: setErr } = await client
+    .from("revisions")
+    .update({ active: true })
+    .eq("id", revisionId);
+  if (setErr) throw new Error(setErr.message, { cause: setErr });
+}
 
 /** Assemble the matcher's ExistingScene view: active scenes + their latest content_hash. */
 export async function loadExistingScenes(
@@ -334,6 +409,17 @@ export async function reconcileAndApply(
   const existing = await loadExistingScenes(client, scriptId);
   const diff = reconcile(existing, parsed, fuzzyMatcher);
 
+  const activeRevision = await getActiveRevision(client, projectId);
+
+  const recordChange = async (sceneId: string, kind: "added" | "modified" | "omitted") => {
+    if (!activeRevision) return;
+    const { error } = await client.from("scene_revision_changes").upsert(
+      { scene_id: sceneId, revision_id: activeRevision.id, change_kind: kind },
+      { onConflict: "scene_id,revision_id" },
+    );
+    if (error) throw new Error(error.message, { cause: error });
+  };
+
   const matchedSceneIds: string[] = [];
 
   // Apply each diff entry against the staged version.
@@ -363,6 +449,9 @@ export async function reconcileAndApply(
         text_anchor_end: p.textAnchorEnd,
       });
       if (srcErr) throw new Error(srcErr.message, { cause: srcErr });
+      if (entry.classification === "modified") {
+        await recordChange(entry.sceneId, "modified");
+      }
     } else if (entry.classification === "new" && entry.parsed) {
       const p = entry.parsed;
       const { data: created, error: insErr } = await client
@@ -390,12 +479,14 @@ export async function reconcileAndApply(
         text_anchor_end: p.textAnchorEnd,
       });
       if (srcErr) throw new Error(srcErr.message, { cause: srcErr });
+      await recordChange(created.id, "added");
     } else if (entry.classification === "removed" && entry.sceneId) {
       const { error: omitErr } = await client
         .from("scenes")
         .update({ status: "omitted", updated_at: new Date().toISOString() })
         .eq("id", entry.sceneId);
       if (omitErr) throw new Error(omitErr.message, { cause: omitErr });
+      await recordChange(entry.sceneId, "omitted");
     }
   }
 

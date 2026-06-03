@@ -288,6 +288,76 @@ Wind howls.
       .eq("status", "active");
     expect((rooftops ?? []).length).toBe(1);
   });
+
+  it("seeds the standard revision set with one active (White) and flags changed scenes on re-import", async () => {
+    const { seedRevisions, listRevisions } = await import("@/lib/scripts/data");
+
+    await seedRevisions(alice as unknown as never, aliceProject);
+    const revisions = await listRevisions(alice as unknown as never, aliceProject);
+    expect(revisions.map((r) => r.name)).toEqual([
+      "White", "Blue", "Pink", "Yellow", "Green", "Goldenrod", "Buff", "Salmon", "Cherry", "Tan",
+    ]);
+    const active = revisions.filter((r) => r.active);
+    expect(active).toHaveLength(1);
+    expect(active[0].name).toBe("White");
+
+    // After a re-import, changed scenes get a scene_revision_changes row under the active set.
+    const v1 = `INT. KITCHEN - DAY\n\nEggs fry.\n`;
+    const { data: script } = await alice
+      .from("scripts").insert({ project_id: aliceProject, title: "RevTest" }).select("id").single();
+    const scriptId = script!.id as string;
+    const { data: me } = await alice.auth.getUser();
+    await alice.from("script_versions").insert({
+      script_id: scriptId, label: "v1", source_format: "fountain", raw_source: v1, created_by: me.user!.id,
+    });
+    const rows = parseFountain(v1).map((p) => ({
+      project_id: aliceProject, script_id: scriptId, ordinal: p.ordinal, scene_number: p.sceneNumber,
+      int_ext: p.intExt, location_slug: p.locationSlug, time_of_day: p.timeOfDay, synopsis: p.synopsis,
+      page_eighths: p.pageEighths, status: "active" as const,
+    }));
+    await alice.from("scenes").insert(rows);
+
+    const v2 = `INT. KITCHEN - DAY\n\nEggs burn badly.\n`;
+    const { stageReimport, reconcileAndApply } = await import("@/lib/scripts/data");
+    const staged = await stageReimport(alice as unknown as never, {
+      projectId: aliceProject, scriptId, rawSource: v2, parsed: parseFountain(v2),
+    });
+    const res = await reconcileAndApply(alice as unknown as never, {
+      projectId: aliceProject, scriptId, scriptVersionId: staged.versionId,
+    });
+    const modifiedId = res.matchedSceneIds[0];
+
+    const { data: changes } = await alice
+      .from("scene_revision_changes")
+      .select("change_kind, revision_id")
+      .eq("scene_id", modifiedId);
+    expect(changes!.length).toBeGreaterThanOrEqual(1);
+    expect(changes!.some((c) => c.change_kind === "modified")).toBe(true);
+  });
+
+  it("blocks a cross-project FK escape on scene_revision_changes (migration 0004 / review I1)", async () => {
+    const { seedRevisions, listRevisions } = await import("@/lib/scripts/data");
+    await seedRevisions(alice as unknown as never, aliceProject); // idempotent
+    const aliceRevs = await listRevisions(alice as unknown as never, aliceProject);
+    const aliceRevisionId = aliceRevs[0].id;
+
+    // Bob's own project + scene.
+    const bobProject = await newProject(bob);
+    const { data: bobScript } = await bob
+      .from("scripts").insert({ project_id: bobProject, title: "Bob Rev" }).select("id").single();
+    const { data: bobScene } = await bob
+      .from("scenes")
+      .insert({ project_id: bobProject, script_id: bobScript!.id, ordinal: 0, status: "active" })
+      .select("id").single();
+
+    // Bob's scene + ALICE's revision (foreign) -> blocked by 0004's two-FK with-check.
+    const { error } = await bob.from("scene_revision_changes").insert({
+      scene_id: bobScene!.id,
+      revision_id: aliceRevisionId,
+      change_kind: "modified",
+    });
+    expect(error).not.toBeNull();
+  });
 });
 
 async function stageReimportForTest(

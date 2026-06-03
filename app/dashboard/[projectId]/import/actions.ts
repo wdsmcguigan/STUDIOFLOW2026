@@ -1,6 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
-import { createScript, applyFirstImport, listScripts } from "@/lib/scripts/data";
+import { createClient } from "@/lib/supabase/server";
+import { createScript, applyFirstImport, listScripts, seedRevisions } from "@/lib/scripts/data";
 import { parseFountain } from "@/lib/scripts/fountain";
 
 export async function importScriptAction(projectId: string, formData: FormData) {
@@ -10,6 +11,8 @@ export async function importScriptAction(projectId: string, formData: FormData) 
 
   let scriptId: string;
   try {
+    const supabase = await createClient();
+    await seedRevisions(supabase as unknown as never, projectId);
     const script = await createScript({ projectId, title });
     scriptId = script.id;
     const parsed = parseFountain(source);

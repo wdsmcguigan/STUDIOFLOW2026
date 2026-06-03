@@ -11,6 +11,17 @@ export async function listProjects(): Promise<Project[]> {
   return data;
 }
 
+export async function getProject(id: string): Promise<Project | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message, { cause: error });
+  return data ? project.parse(data) : null;
+}
+
 export async function createProject(input: CreateProjectInput): Promise<Project> {
   const parsed = createProjectInput.parse(input);
   const supabase = await createClient();

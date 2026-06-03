@@ -79,6 +79,268 @@ export type Database = {
         }
         Relationships: []
       }
+      revisions: {
+        Row: {
+          active: boolean
+          color: string
+          created_at: string
+          id: string
+          name: string
+          ordinal: number
+          project_id: string
+        }
+        Insert: {
+          active?: boolean
+          color: string
+          created_at?: string
+          id?: string
+          name: string
+          ordinal: number
+          project_id: string
+        }
+        Update: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          ordinal?: number
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revisions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scene_revision_changes: {
+        Row: {
+          change_kind: string
+          created_at: string
+          revision_id: string
+          scene_id: string
+        }
+        Insert: {
+          change_kind: string
+          created_at?: string
+          revision_id: string
+          scene_id: string
+        }
+        Update: {
+          change_kind?: string
+          created_at?: string
+          revision_id?: string
+          scene_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scene_revision_changes_revision_id_fkey"
+            columns: ["revision_id"]
+            isOneToOne: false
+            referencedRelation: "revisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scene_revision_changes_scene_id_fkey"
+            columns: ["scene_id"]
+            isOneToOne: false
+            referencedRelation: "scenes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scene_sources: {
+        Row: {
+          content_hash: string
+          scene_id: string
+          script_version_id: string
+          text_anchor_end: number
+          text_anchor_start: number
+        }
+        Insert: {
+          content_hash: string
+          scene_id: string
+          script_version_id: string
+          text_anchor_end: number
+          text_anchor_start: number
+        }
+        Update: {
+          content_hash?: string
+          scene_id?: string
+          script_version_id?: string
+          text_anchor_end?: number
+          text_anchor_start?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scene_sources_scene_id_fkey"
+            columns: ["scene_id"]
+            isOneToOne: false
+            referencedRelation: "scenes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scene_sources_script_version_id_fkey"
+            columns: ["script_version_id"]
+            isOneToOne: false
+            referencedRelation: "script_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scenes: {
+        Row: {
+          created_at: string
+          id: string
+          int_ext: string | null
+          location_slug: string | null
+          number_locked: boolean
+          ordinal: number
+          page_eighths: number | null
+          project_id: string
+          scene_number: string | null
+          script_day: string | null
+          script_id: string
+          status: string
+          synopsis: string | null
+          time_of_day: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          int_ext?: string | null
+          location_slug?: string | null
+          number_locked?: boolean
+          ordinal: number
+          page_eighths?: number | null
+          project_id: string
+          scene_number?: string | null
+          script_day?: string | null
+          script_id: string
+          status?: string
+          synopsis?: string | null
+          time_of_day?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          int_ext?: string | null
+          location_slug?: string | null
+          number_locked?: boolean
+          ordinal?: number
+          page_eighths?: number | null
+          project_id?: string
+          scene_number?: string | null
+          script_day?: string | null
+          script_id?: string
+          status?: string
+          synopsis?: string | null
+          time_of_day?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scenes_script_id_fkey"
+            columns: ["script_id"]
+            isOneToOne: false
+            referencedRelation: "scripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      script_versions: {
+        Row: {
+          created_by: string
+          id: string
+          imported_at: string
+          label: string
+          locked: boolean
+          raw_source: string
+          revision_id: string | null
+          script_id: string
+          source_format: string
+        }
+        Insert: {
+          created_by: string
+          id?: string
+          imported_at?: string
+          label: string
+          locked?: boolean
+          raw_source: string
+          revision_id?: string | null
+          script_id: string
+          source_format?: string
+        }
+        Update: {
+          created_by?: string
+          id?: string
+          imported_at?: string
+          label?: string
+          locked?: boolean
+          raw_source?: string
+          revision_id?: string | null
+          script_id?: string
+          source_format?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "script_versions_revision_id_fkey"
+            columns: ["revision_id"]
+            isOneToOne: false
+            referencedRelation: "revisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "script_versions_script_id_fkey"
+            columns: ["script_id"]
+            isOneToOne: false
+            referencedRelation: "scripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scripts: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scripts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

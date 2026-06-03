@@ -26,10 +26,6 @@ The app is **local-first** — production data is stored in your browser via Ind
 
 ## ✨ Features
 
-### Immersive landing experience (`/landing`)
-- WebGL-inspired particle field, floating glassmorphism holo-panels with 3D pointer tilt, an abstract orbiting 3D core, and a perspective grid.
-- Pure CSS + Canvas animations with cinematic scroll-reveal transitions and count-up stats — **zero heavy 3D dependencies**.
-- Fully respects `prefers-reduced-motion`.
 
 ### Production modules
 | Group | Modules |

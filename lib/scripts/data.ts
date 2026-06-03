@@ -493,6 +493,46 @@ export async function reconcileAndApply(
   return { versionId, diff, matchedSceneIds };
 }
 
+/** In-app edit write path: edit a scene's production metadata (and/or prose-derived
+ *  fields), recording the change into the active revision set. Operates on the
+ *  stable scene UUID, so the edit survives later re-imports (anchored to the scene). */
+export async function updateSceneInApp(
+  client: DbClient,
+  args: {
+    projectId: string;
+    sceneId: string;
+    patch: Partial<{
+      int_ext: string | null;
+      location_slug: string | null;
+      time_of_day: string | null;
+      synopsis: string | null;
+      script_day: string | null;
+      scene_number: string | null;
+      number_locked: boolean;
+      status: "active" | "omitted";
+    }>;
+  },
+): Promise<Scene> {
+  const { projectId, sceneId, patch } = args;
+  const { data, error } = await client
+    .from("scenes")
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq("id", sceneId)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message, { cause: error });
+
+  const active = await getActiveRevision(client, projectId);
+  if (active) {
+    const { error: changeErr } = await client.from("scene_revision_changes").upsert(
+      { scene_id: sceneId, revision_id: active.id, change_kind: "modified" },
+      { onConflict: "scene_id,revision_id" },
+    );
+    if (changeErr) throw new Error(changeErr.message, { cause: changeErr });
+  }
+  return scene.parse(data);
+}
+
 /** Production wrapper for the APPLY step (confirm): apply a previously-staged
  *  version using the SSR cookie client. */
 export async function applyReconciledImport(args: {

@@ -335,6 +335,37 @@ Wind howls.
     expect(changes!.some((c) => c.change_kind === "modified")).toBe(true);
   });
 
+  it("in-app edit updates the scene and flags it changed in the active revision set", async () => {
+    const { seedRevisions, updateSceneInApp } = await import("@/lib/scripts/data");
+    await seedRevisions(alice as unknown as never, aliceProject);
+
+    const src = `INT. BAR - NIGHT\n\nNeon hums.\n`;
+    const { data: script } = await alice
+      .from("scripts").insert({ project_id: aliceProject, title: "EditTest" }).select("id").single();
+    const scriptId = script!.id as string;
+    const { data: scene } = await alice.from("scenes").insert({
+      project_id: aliceProject, script_id: scriptId, ordinal: 0, scene_number: "1",
+      int_ext: "INT", location_slug: "BAR", time_of_day: "NIGHT", synopsis: "Quiet.",
+      page_eighths: 8, status: "active",
+    }).select("id").single();
+    void src;
+
+    await updateSceneInApp(alice as unknown as never, {
+      projectId: aliceProject,
+      sceneId: scene!.id,
+      patch: { synopsis: "Loud and crowded.", time_of_day: "DAY" },
+    });
+
+    const { data: updated } = await alice
+      .from("scenes").select("synopsis, time_of_day").eq("id", scene!.id).single();
+    expect(updated!.synopsis).toBe("Loud and crowded.");
+    expect(updated!.time_of_day).toBe("DAY");
+
+    const { data: changes } = await alice
+      .from("scene_revision_changes").select("change_kind").eq("scene_id", scene!.id);
+    expect(changes!.some((c) => c.change_kind === "modified")).toBe(true);
+  });
+
   it("blocks a cross-project FK escape on scene_revision_changes (migration 0004 / review I1)", async () => {
     const { seedRevisions, listRevisions } = await import("@/lib/scripts/data");
     await seedRevisions(alice as unknown as never, aliceProject); // idempotent

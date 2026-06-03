@@ -389,6 +389,57 @@ Wind howls.
     });
     expect(error).not.toBeNull();
   });
+
+  it("a scene edited in-app AND changed in a re-imported draft is surfaced as a conflict, FD-wins, in-app kept in history", async () => {
+    const { seedRevisions, updateSceneInApp, stageReimport, reconcileAndApply } = await import("@/lib/scripts/data");
+    await seedRevisions(alice as unknown as never, aliceProject);
+
+    const v1 = `INT. LAB - DAY\n\nBeakers bubble.\n`;
+    const { data: script } = await alice
+      .from("scripts").insert({ project_id: aliceProject, title: "ConflictTest" }).select("id").single();
+    const scriptId = script!.id as string;
+    const { data: me } = await alice.auth.getUser();
+    await alice.from("script_versions").insert({
+      script_id: scriptId, label: "v1", source_format: "fountain", raw_source: v1, created_by: me.user!.id,
+    });
+    const { data: scenes } = await alice.from("scenes").insert(
+      parseFountain(v1).map((p) => ({
+        project_id: aliceProject, script_id: scriptId, ordinal: p.ordinal, scene_number: p.sceneNumber,
+        int_ext: p.intExt, location_slug: p.locationSlug, time_of_day: p.timeOfDay, synopsis: p.synopsis,
+        page_eighths: p.pageEighths, status: "active" as const,
+      })),
+    ).select("id, location_slug");
+    const labId = scenes!.find((s) => s.location_slug === "LAB")!.id;
+
+    // In-app edit on the LAB scene.
+    await updateSceneInApp(alice as unknown as never, {
+      projectId: aliceProject, sceneId: labId, patch: { synopsis: "In-app: the experiment fails." },
+    });
+
+    // Re-import a draft that ALSO changes the LAB scene body: stage, then confirm/apply.
+    const v2 = `INT. LAB - DAY\n\nBeakers shatter violently.\n`;
+    const staged = await stageReimport(alice as unknown as never, {
+      projectId: aliceProject, scriptId, rawSource: v2, parsed: parseFountain(v2),
+    });
+    const res = await reconcileAndApply(alice as unknown as never, {
+      projectId: aliceProject, scriptId, scriptVersionId: staged.versionId,
+    });
+
+    const conflict = res.diff.find((d) => d.sceneId === labId);
+    expect(conflict?.classification).toBe("conflict");
+
+    // FD-wins: the live scene now reflects the imported draft, overwriting the
+    // in-app edit ("In-app: the experiment fails.") with the v2-derived synopsis.
+    const { data: live } = await alice
+      .from("scenes").select("synopsis").eq("id", labId).single();
+    expect(live!.synopsis).toBe("Beakers shatter violently.");
+    expect(live!.synopsis).not.toBe("In-app: the experiment fails.");
+
+    // …and the in-app edit is retained in history (scene_revision_changes row still present).
+    const { data: history } = await alice
+      .from("scene_revision_changes").select("scene_id").eq("scene_id", labId);
+    expect(history!.length).toBeGreaterThanOrEqual(1);
+  });
 });
 
 async function stageReimportForTest(

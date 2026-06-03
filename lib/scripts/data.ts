@@ -21,6 +21,7 @@ import type { Database } from "@/lib/db/types";
 import { parseFountain } from "@/lib/scripts/fountain";
 import { reconcile, fuzzyMatcher, type ExistingScene } from "@/lib/scripts/reconcile";
 import type { SceneDiff } from "@/lib/scripts/schema";
+import { markConflicts } from "@/lib/scripts/conflict";
 
 export async function createScript(input: CreateScriptInput): Promise<Script> {
   const parsed = createScriptInput.parse(input);
@@ -290,6 +291,42 @@ export async function loadExistingScenes(
   });
 }
 
+/** Load in-app divergences for the active revision and upgrade any matched entry
+ *  that was also edited in-app to a `conflict`. Returns the resolved diff plus the
+ *  recorded in-app prose per scene id (for the side-by-side in the review screen). */
+async function markConflictsForReview(
+  client: DbClient,
+  projectId: string,
+  diff: SceneDiff[],
+): Promise<{ resolved: SceneDiff[]; inAppByScene: Record<string, string> }> {
+  const active = await getActiveRevision(client, projectId);
+  if (!active) return { resolved: diff, inAppByScene: {} };
+
+  const { data: edits, error: editErr } = await client
+    .from("scene_revision_changes")
+    .select("scene_id")
+    .eq("revision_id", active.id)
+    .eq("change_kind", "modified");
+  if (editErr) throw new Error(editErr.message, { cause: editErr });
+  const editedIds = new Set((edits ?? []).map((e) => e.scene_id));
+  const resolved = markConflicts(diff, editedIds);
+
+  // Recorded in-app prose for each conflicting scene (synopsis stands in for prose in Phase 1).
+  const inAppByScene: Record<string, string> = {};
+  const conflictIds = resolved
+    .filter((d) => d.classification === "conflict" && d.sceneId)
+    .map((d) => d.sceneId as string);
+  if (conflictIds.length > 0) {
+    const { data: rows, error: proseErr } = await client
+      .from("scenes")
+      .select("id, synopsis")
+      .in("id", conflictIds);
+    if (proseErr) throw new Error(proseErr.message, { cause: proseErr });
+    for (const r of rows ?? []) inAppByScene[r.id] = r.synopsis ?? "";
+  }
+  return { resolved, inAppByScene };
+}
+
 /** STAGE (re-import step 1): create the immutable version snapshot (storing
  *  raw_source) and compute the structured diff against the live scenes —
  *  WITHOUT mutating any `scenes`/`scene_sources`. The `script_versions` row IS
@@ -354,9 +391,8 @@ export async function computeStagedDiff(
   const parsed = parseFountain(version.raw_source);
   const existing = await loadExistingScenes(client, scriptId);
   const diff = reconcile(existing, parsed, fuzzyMatcher);
-  void projectId; // projectId is used by markConflicts/inAppByScene in Task 14.
-
-  return { diff, inAppByScene: {} };
+  const { resolved, inAppByScene } = await markConflictsForReview(client, projectId, diff);
+  return { diff: resolved, inAppByScene };
 }
 
 /** APPLY (re-import step 2, invoked at confirm): given a previously-staged
@@ -409,6 +445,8 @@ export async function reconcileAndApply(
   const existing = await loadExistingScenes(client, scriptId);
   const diff = reconcile(existing, parsed, fuzzyMatcher);
 
+  const { resolved } = await markConflictsForReview(client, projectId, diff);
+
   const activeRevision = await getActiveRevision(client, projectId);
 
   const recordChange = async (sceneId: string, kind: "added" | "modified" | "omitted") => {
@@ -423,8 +461,14 @@ export async function reconcileAndApply(
   const matchedSceneIds: string[] = [];
 
   // Apply each diff entry against the staged version.
-  for (const entry of diff) {
-    if ((entry.classification === "unchanged" || entry.classification === "modified") && entry.sceneId && entry.parsed) {
+  for (const entry of resolved) {
+    if (
+      (entry.classification === "unchanged" ||
+        entry.classification === "modified" ||
+        entry.classification === "conflict") &&
+      entry.sceneId &&
+      entry.parsed
+    ) {
       matchedSceneIds.push(entry.sceneId);
       const p = entry.parsed;
       const { error: upErr } = await client
@@ -449,7 +493,7 @@ export async function reconcileAndApply(
         text_anchor_end: p.textAnchorEnd,
       });
       if (srcErr) throw new Error(srcErr.message, { cause: srcErr });
-      if (entry.classification === "modified") {
+      if (entry.classification !== "unchanged") {
         await recordChange(entry.sceneId, "modified");
       }
     } else if (entry.classification === "new" && entry.parsed) {
@@ -490,7 +534,7 @@ export async function reconcileAndApply(
     }
   }
 
-  return { versionId, diff, matchedSceneIds };
+  return { versionId, diff: resolved, matchedSceneIds };
 }
 
 /** In-app edit write path: edit a scene's production metadata (and/or prose-derived

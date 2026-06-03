@@ -23,6 +23,7 @@ import {
 import ParticleField from "@/components/landing/particle-field"
 import HoloCard from "@/components/landing/holo-card"
 import Reveal from "@/components/landing/reveal"
+import OpenCookieSettings from "@/components/open-cookie-settings"
 
 export default function ImmersiveLanding() {
   // Pointer-driven parallax for the hero's floating holographic layer
@@ -600,9 +601,11 @@ function Footer() {
       </div>
       <div className="mx-auto mt-12 flex max-w-6xl flex-col items-center justify-between gap-4 border-t border-white/5 pt-8 text-sm text-slate-500 md:flex-row">
         <p>© {new Date().getFullYear()} StudioFlow. Engineered in the future.</p>
-        <div className="flex gap-6">
-          <Link href="#" className="hover:text-white">Privacy</Link>
-          <Link href="#" className="hover:text-white">Terms</Link>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <Link href="/privacy" className="hover:text-white">Privacy</Link>
+          <Link href="/terms" className="hover:text-white">Terms</Link>
+          <Link href="/cookies" className="hover:text-white">Cookies</Link>
+          <OpenCookieSettings className="hover:text-white">Cookie Settings</OpenCookieSettings>
         </div>
       </div>
     </footer>

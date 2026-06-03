@@ -98,3 +98,60 @@ describe("reconcile — tier 1 (locked-number key join)", () => {
     expect(removed.sceneId).toBe("id-6");
   });
 });
+
+import { reconcile as reconcileT3, fuzzyMatcher, type ExistingScene as ES } from "@/lib/scripts/reconcile";
+import { contentHash as hash } from "@/lib/scripts/hash";
+
+function p3(over: Partial<ParsedScene> & { ordinal: number }): ParsedScene {
+  return {
+    sceneNumber: null,
+    intExt: "INT",
+    locationSlug: "DINER",
+    timeOfDay: "DAY",
+    bodyText: "Mary sits alone at the counter sipping cold coffee.",
+    synopsis: "",
+    pageEighths: 8,
+    textAnchorStart: 0,
+    textAnchorEnd: 10,
+    ...over,
+  };
+}
+
+function e3(p: ParsedScene, id: string): ES {
+  return {
+    sceneId: id,
+    sceneNumber: p.sceneNumber,
+    numberLocked: false,
+    contentHash: hash(p),
+    intExt: p.intExt,
+    locationSlug: p.locationSlug,
+    timeOfDay: p.timeOfDay,
+    bodyText: p.bodyText,
+    ordinal: p.ordinal,
+  };
+}
+
+describe("reconcile — tier 3 (fuzzy)", () => {
+  it("matches an edited+renamed scene above the confidence threshold and keeps the id", () => {
+    const original = p3({ ordinal: 0, bodyText: "Mary sits alone at the counter sipping cold coffee." });
+    const existing = [e3(original, "id-a")];
+    // Slug changed AND body lightly edited -> escapes tiers 1 & 2, caught by tier 3.
+    const incoming = [
+      p3({ ordinal: 0, locationSlug: "DINER COUNTER", bodyText: "Mary sits alone at the counter sipping her cold coffee." }),
+    ];
+    const diff = reconcileT3(existing, incoming, fuzzyMatcher);
+    const entry = diff.find((d) => d.sceneId === "id-a")!;
+    expect(entry.classification).toBe("modified");
+    expect(entry.confidence).toBeGreaterThan(0);
+    expect(entry.confidence).toBeLessThan(1);
+  });
+
+  it("does NOT fuzzy-match two unrelated scenes (below threshold => new + removed)", () => {
+    const original = p3({ ordinal: 0, bodyText: "Mary sits alone at the counter sipping cold coffee." });
+    const existing = [e3(original, "id-a")];
+    const incoming = [p3({ ordinal: 0, locationSlug: "SUBMARINE", bodyText: "Torpedoes scream through the dark water." })];
+    const diff = reconcileT3(existing, incoming, fuzzyMatcher);
+    expect(diff.some((d) => d.classification === "new" && d.parsed?.locationSlug === "SUBMARINE")).toBe(true);
+    expect(diff.some((d) => d.classification === "removed" && d.sceneId === "id-a")).toBe(true);
+  });
+});

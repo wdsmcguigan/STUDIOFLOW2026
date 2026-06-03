@@ -1,5 +1,6 @@
 import { contentHash } from "@/lib/scripts/hash";
 import type { ParsedScene, SceneDiff } from "@/lib/scripts/schema";
+import stringSimilarity from "string-similarity";
 
 /** The existing-scene view the matcher needs (assembled by the data layer
  *  from `scenes` + their latest `scene_sources.content_hash`). */
@@ -30,6 +31,48 @@ export type FuzzyMatcher = (
 ) => Array<{ sceneId: string; parsedOrdinal: number; confidence: number }>;
 
 const noFuzzy: FuzzyMatcher = () => [];
+
+/** Minimum Dice-coefficient similarity for a fuzzy (tier-3) match to be
+ *  accepted automatically; below this the scenes are treated as new/removed.
+ *  Matches in [THRESHOLD, 1) are surfaced for human review in the diff screen. */
+export const FUZZY_THRESHOLD = 0.5;
+
+/** Tier 3: greedy best-pair fuzzy matching on slugline+body similarity. */
+export const fuzzyMatcher: FuzzyMatcher = (remainingExisting, remainingParsed) => {
+  const fingerprint = (s: {
+    intExt: string | null;
+    locationSlug: string | null;
+    timeOfDay: string | null;
+    bodyText: string;
+  }) =>
+    `${slugKey(s)} ${s.bodyText}`.replace(/\s+/g, " ").trim().toLowerCase();
+
+  type Candidate = { sceneId: string; parsedOrdinal: number; confidence: number };
+  const candidates: Candidate[] = [];
+  for (const e of remainingExisting) {
+    for (const p of remainingParsed) {
+      const confidence = stringSimilarity.compareTwoStrings(
+        fingerprint(e),
+        fingerprint(p),
+      );
+      if (confidence >= FUZZY_THRESHOLD) {
+        candidates.push({ sceneId: e.sceneId, parsedOrdinal: p.ordinal, confidence });
+      }
+    }
+  }
+  // Greedily take the highest-confidence pairs, each scene used once.
+  candidates.sort((a, b) => b.confidence - a.confidence);
+  const usedE = new Set<string>();
+  const usedP = new Set<number>();
+  const result: Candidate[] = [];
+  for (const c of candidates) {
+    if (usedE.has(c.sceneId) || usedP.has(c.parsedOrdinal)) continue;
+    usedE.add(c.sceneId);
+    usedP.add(c.parsedOrdinal);
+    result.push(c);
+  }
+  return result;
+};
 
 export function reconcile(
   existing: ExistingScene[],

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Legacy prototype code — not part of the current project
+    "legacy/**",
   ]),
 ]);
 

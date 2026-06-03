@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Grain } from "@/components/ui/grain";
 
 const display = Bricolage_Grotesque({
   variable: "--font-bricolage",
@@ -47,6 +48,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <Grain />
           {children}
         </ThemeProvider>
       </body>

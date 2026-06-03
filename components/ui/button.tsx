@@ -18,6 +18,8 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        ember:
+          "bg-[linear-gradient(140deg,var(--brand),var(--brand-2))] text-[var(--brand-ink)] shadow-[0_5px_14px_var(--brand-soft)] hover:brightness-105",
       },
       size: {
         default:

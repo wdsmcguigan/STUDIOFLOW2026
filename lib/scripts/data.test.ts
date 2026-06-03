@@ -46,8 +46,11 @@ describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("scripts/scenes data lay
   let aliceVersionId: string;
 
   beforeAll(async () => {
-    alice = await makeUser(`alice-${Date.now()}@test.dev`);
-    bob = await makeUser(`bob-${Date.now()}@test.dev`);
+    // Globally-unique emails (randomUUID, not Date.now()) so this file's users
+    // never collide with another integration file's users when Vitest runs test
+    // files in parallel workers (a same-millisecond Date.now() would duplicate).
+    alice = await makeUser(`alice-${globalThis.crypto.randomUUID()}@test.dev`);
+    bob = await makeUser(`bob-${globalThis.crypto.randomUUID()}@test.dev`);
     aliceProject = await newProject(alice);
   });
 

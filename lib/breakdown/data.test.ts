@@ -1,6 +1,15 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/db/types";
+import {
+  seedBreakdownTaxonomy,
+  listElementCategories,
+  listDepartments,
+  createElement,
+  listElements,
+  createCharacter,
+  listCharacters,
+} from "@/lib/breakdown/data";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -39,5 +48,31 @@ describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("breakdown graph RLS (00
     const { data: cat } = await alice.from("element_categories").insert({ project_id: aliceProject, name: "Props", department_id: dept!.id }).select("id").single();
     const { error } = await alice.from("elements").insert({ project_id: aliceProject, category_id: cat!.id, name: "chrome revolver" });
     expect(error).toBeNull();
+  });
+});
+
+describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("breakdown data layer — catalog/people", () => {
+  let alice: SupabaseClient<Database>, project: string;
+  beforeAll(async () => { alice = await makeUser(`alice-${crypto.randomUUID()}@test.dev`); project = await newProject(alice); });
+
+  it("seedBreakdownTaxonomy is idempotent and maps categories to departments", async () => {
+    await seedBreakdownTaxonomy(alice as never, project);
+    await seedBreakdownTaxonomy(alice as never, project); // second call must not duplicate
+    const cats = await listElementCategories(alice as never, project);
+    const depts = await listDepartments(alice as never, project);
+    expect(cats.length).toBeGreaterThan(10);
+    expect(depts.length).toBeGreaterThan(5);
+    const props = cats.find((c) => c.name === "Props");
+    expect(props?.department_id).toBeTruthy();
+  });
+  it("createElement validates + returns a typed row", async () => {
+    const cats = await listElementCategories(alice as never, project);
+    const el = await createElement(alice as never, { projectId: project, categoryId: cats[0].id, name: "chrome revolver" });
+    expect(el.name).toBe("chrome revolver");
+    expect((await listElements(alice as never, project)).some((e) => e.id === el.id)).toBe(true);
+  });
+  it("createCharacter stores aliases", async () => {
+    const c = await createCharacter(alice as never, { projectId: project, primaryName: "MARY", aliases: ["MARY ANN"] });
+    expect(c.aliases).toContain("MARY ANN");
   });
 });

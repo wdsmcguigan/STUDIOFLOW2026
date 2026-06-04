@@ -34,6 +34,346 @@ export type Database = {
   }
   public: {
     Tables: {
+      characters: {
+        Row: {
+          aliases: string[]
+          cast_person_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          primary_name: string
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          aliases?: string[]
+          cast_person_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          primary_name: string
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          aliases?: string[]
+          cast_person_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          primary_name?: string
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "characters_cast_person_id_fkey"
+            columns: ["cast_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "characters_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          code: string | null
+          created_at: string
+          id: string
+          name: string
+          ordinal: number
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          ordinal?: number
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          ordinal?: number
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      element_categories: {
+        Row: {
+          code: string | null
+          created_at: string
+          department_id: string | null
+          id: string
+          name: string
+          ordinal: number
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          department_id?: string | null
+          id?: string
+          name: string
+          ordinal?: number
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          department_id?: string | null
+          id?: string
+          name?: string
+          ordinal?: number
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "element_categories_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "element_categories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      elements: {
+        Row: {
+          category_id: string
+          created_at: string
+          description: string | null
+          estimated_cost: number | null
+          id: string
+          name: string
+          project_id: string
+          updated_at: string
+          vendor_org_id: string | null
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          id?: string
+          name: string
+          project_id: string
+          updated_at?: string
+          vendor_org_id?: string | null
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          id?: string
+          name?: string
+          project_id?: string
+          updated_at?: string
+          vendor_org_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elements_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "element_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "elements_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "elements_vendor_org_id_fkey"
+            columns: ["vendor_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          completed: number | null
+          created_at: string
+          created_by: string
+          error: string | null
+          id: string
+          params: Json
+          progress: number
+          project_id: string
+          result: Json | null
+          status: string
+          total: number | null
+          type: string
+          updated_at: string
+          workflow_run_id: string | null
+        }
+        Insert: {
+          completed?: number | null
+          created_at?: string
+          created_by: string
+          error?: string | null
+          id?: string
+          params?: Json
+          progress?: number
+          project_id: string
+          result?: Json | null
+          status?: string
+          total?: number | null
+          type: string
+          updated_at?: string
+          workflow_run_id?: string | null
+        }
+        Update: {
+          completed?: number | null
+          created_at?: string
+          created_by?: string
+          error?: string | null
+          id?: string
+          params?: Json
+          progress?: number
+          project_id?: string
+          result?: Json | null
+          status?: string
+          total?: number | null
+          type?: string
+          updated_at?: string
+          workflow_run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          project_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          project_id: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          project_id?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          org_id: string | null
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          org_id?: string | null
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          org_id?: string | null
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -113,6 +453,132 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scene_characters: {
+        Row: {
+          anchor_state: string
+          character_id: string
+          confidence: number | null
+          created_at: string
+          id: string
+          notes: string | null
+          presence_type: string
+          provenance: string
+          scene_id: string
+          segment_id: string | null
+          status: string
+          text_anchor: Json | null
+          updated_at: string
+        }
+        Insert: {
+          anchor_state?: string
+          character_id: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          presence_type: string
+          provenance?: string
+          scene_id: string
+          segment_id?: string | null
+          status?: string
+          text_anchor?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          anchor_state?: string
+          character_id?: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          presence_type?: string
+          provenance?: string
+          scene_id?: string
+          segment_id?: string | null
+          status?: string
+          text_anchor?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scene_characters_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scene_characters_scene_id_fkey"
+            columns: ["scene_id"]
+            isOneToOne: false
+            referencedRelation: "scenes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scene_elements: {
+        Row: {
+          anchor_state: string
+          confidence: number | null
+          created_at: string
+          element_id: string
+          id: string
+          notes: string | null
+          provenance: string
+          quantity: number | null
+          scene_id: string
+          segment_id: string | null
+          status: string
+          text_anchor: Json | null
+          updated_at: string
+        }
+        Insert: {
+          anchor_state?: string
+          confidence?: number | null
+          created_at?: string
+          element_id: string
+          id?: string
+          notes?: string | null
+          provenance?: string
+          quantity?: number | null
+          scene_id: string
+          segment_id?: string | null
+          status?: string
+          text_anchor?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          anchor_state?: string
+          confidence?: number | null
+          created_at?: string
+          element_id?: string
+          id?: string
+          notes?: string | null
+          provenance?: string
+          quantity?: number | null
+          scene_id?: string
+          segment_id?: string | null
+          status?: string
+          text_anchor?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scene_elements_element_id_fkey"
+            columns: ["element_id"]
+            isOneToOne: false
+            referencedRelation: "elements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scene_elements_scene_id_fkey"
+            columns: ["scene_id"]
+            isOneToOne: false
+            referencedRelation: "scenes"
             referencedColumns: ["id"]
           },
         ]
@@ -346,7 +812,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      merge_characters: {
+        Args: { p_absorbed: string; p_survivor: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

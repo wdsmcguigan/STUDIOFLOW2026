@@ -5,6 +5,7 @@ import {
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { CommandPalette } from "@/components/layout/command-palette";
+import { listProjects } from "@/lib/projects/data";
 
 /**
  * Project-scoped shell — wraps all /dashboard/[projectId]/** routes.
@@ -29,10 +30,15 @@ export default async function ProjectLayout({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
+  const projects = await listProjects();
 
   return (
     <SidebarProvider>
-      <AppSidebar projectId={projectId} />
+      <AppSidebar
+        projectId={projectId}
+        projects={projects}
+        currentProjectId={projectId}
+      />
       <SidebarInset className="relative z-[2]">
         {/* Mobile sidebar trigger — visible only when sidebar is collapsed */}
         <div className="flex items-center border-b border-[var(--line)] px-2 py-1 md:hidden">

@@ -36,6 +36,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { ProjectSwitcher } from "@/components/layout/project-switcher";
+import type { Project } from "@/lib/projects/schema";
 
 // ---------------------------------------------------------------------------
 // Nav model
@@ -189,6 +191,10 @@ function AIAssistantItem() {
 export interface AppSidebarProps {
   /** The project currently in context — used to build absolute hrefs. */
   projectId: string;
+  /** All projects accessible to the current user — fed from the server layout. */
+  projects: Project[];
+  /** The id of the project currently in context — mirrors projectId; explicit for the switcher. */
+  currentProjectId: string;
 }
 
 /**
@@ -197,7 +203,7 @@ export interface AppSidebarProps {
  * Must be rendered inside a <SidebarProvider> (done by the project layout).
  * Mobile: the shadcn Sidebar collapses to a Sheet via the SidebarTrigger in TopBar.
  */
-export function AppSidebar({ projectId }: AppSidebarProps) {
+export function AppSidebar({ projectId, projects, currentProjectId }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -249,6 +255,11 @@ export function AppSidebar({ projectId }: AppSidebarProps) {
             }}
           />
         </Link>
+
+        {/* Project switcher — sits below the brandmark filament, above the nav groups */}
+        <div className="px-1 pt-3 pb-1">
+          <ProjectSwitcher projects={projects} currentProjectId={currentProjectId} />
+        </div>
       </SidebarHeader>
 
       {/* ------------------------------------------------------------------ */}

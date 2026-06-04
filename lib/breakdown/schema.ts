@@ -229,3 +229,22 @@ export const aiBreakdownOutput = z.object({
 
 export type AiBreakdownItem = z.infer<typeof aiBreakdownItem>;
 export type AiBreakdownOutput = z.infer<typeof aiBreakdownOutput>;
+
+// ---- Job row schema (source of truth for async queue panel) ---------------
+export const job = z.object({
+  id: z.uuid(),
+  project_id: z.uuid(),
+  type: z.string(),
+  status: z.string(),
+  progress: z.number().int(),
+  total: z.number().int().nullable(),
+  completed: z.number().int().nullable(),
+  params: z.record(z.string(), z.unknown()),
+  result: z.record(z.string(), z.unknown()).nullable(),
+  error: z.string().nullable(),
+  workflow_run_id: z.string().nullable(),
+  created_by: z.uuid(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+export type Job = z.infer<typeof job>;

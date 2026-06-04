@@ -15,6 +15,10 @@ import {
   listConfirmedSceneTags,
   setSceneElementStatus,
   mergeCharacter,
+  createJob,
+  listJobs,
+  updateJobProgress,
+  setJobStatus,
 } from "@/lib/breakdown/data";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -200,5 +204,27 @@ describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("character merge (0007)"
     const danLinks = tags.characters.filter((t) => t.character_id === dan.id);
     expect(danLinks).toHaveLength(1); // exactly one survivor link, no duplicate
     expect(tags.characters.some((t) => t.character_id === daniel.id)).toBe(false);
+  });
+});
+
+describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("jobs data layer (0008)", () => {
+  let alice: SupabaseClient<Database>, bob: SupabaseClient<Database>, project: string, sceneId: string;
+  beforeAll(async () => {
+    alice = await makeUser(`alice-${crypto.randomUUID()}@test.dev`);
+    bob = await makeUser(`bob-${crypto.randomUUID()}@test.dev`);
+    project = await newProject(alice);
+    const { data: script } = await alice.from("scripts").insert({ project_id: project, title: "S" }).select("id").single();
+    const { data: scene } = await alice.from("scenes").insert({ project_id: project, script_id: script!.id, ordinal: 0, status: "active" }).select("id").single();
+    sceneId = scene!.id;
+  });
+  it("creates → progresses → completes a job; another user can't see it", async () => {
+    const { data: me } = await alice.auth.getUser();
+    const j = await createJob(alice as never, { projectId: project, type: "breakdown", params: { sceneIds: [sceneId] }, total: 1, createdBy: me.user!.id });
+    expect(j.status).toBe("queued");
+    await updateJobProgress(alice as never, { id: j.id, completed: 1, progress: 100 });
+    const done = await setJobStatus(alice as never, { id: j.id, status: "succeeded" });
+    expect(done.status).toBe("succeeded");
+    const bobView = await listJobs(bob as never, project).catch(() => []);
+    expect(bobView).toHaveLength(0);
   });
 });

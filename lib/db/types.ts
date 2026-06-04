@@ -226,6 +226,65 @@ export type Database = {
           },
         ]
       }
+      jobs: {
+        Row: {
+          completed: number | null
+          created_at: string
+          created_by: string
+          error: string | null
+          id: string
+          params: Json
+          progress: number
+          project_id: string
+          result: Json | null
+          status: string
+          total: number | null
+          type: string
+          updated_at: string
+          workflow_run_id: string | null
+        }
+        Insert: {
+          completed?: number | null
+          created_at?: string
+          created_by: string
+          error?: string | null
+          id?: string
+          params?: Json
+          progress?: number
+          project_id: string
+          result?: Json | null
+          status?: string
+          total?: number | null
+          type: string
+          updated_at?: string
+          workflow_run_id?: string | null
+        }
+        Update: {
+          completed?: number | null
+          created_at?: string
+          created_by?: string
+          error?: string | null
+          id?: string
+          params?: Json
+          progress?: number
+          project_id?: string
+          result?: Json | null
+          status?: string
+          total?: number | null
+          type?: string
+          updated_at?: string
+          workflow_run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string

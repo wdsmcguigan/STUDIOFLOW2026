@@ -2,7 +2,7 @@
 // writes parse their input at the server boundary. Follows lib/scripts/data.ts style.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/lib/db/types";
+import type { Database, Json } from "@/lib/db/types";
 import {
   department,
   elementCategory,
@@ -20,6 +20,7 @@ import {
   createOrganizationInput,
   createPersonInput,
   mergeCharactersInput,
+  job,
   type Department,
   type ElementCategory,
   type Organization,
@@ -30,6 +31,7 @@ import {
   type SceneCharacter,
   type TagSceneElementInput,
   type TagSceneCharacterInput,
+  type Job,
 } from "@/lib/breakdown/schema";
 
 type DbClient = SupabaseClient<Database>;
@@ -466,4 +468,91 @@ export async function mergeCharacter(client: DbClient, input: unknown): Promise<
   const p = mergeCharactersInput.parse(input);
   const { error } = await client.rpc("merge_characters", { p_survivor: p.survivorId, p_absorbed: p.absorbedId });
   if (error) throw new Error(error.message, { cause: error });
+}
+
+// ---------------------------------------------------------------------------
+// Jobs (async queue panel source of truth)
+// ---------------------------------------------------------------------------
+
+export async function createJob(
+  client: DbClient,
+  args: {
+    projectId: string;
+    type: "breakdown" | "import";
+    params?: Record<string, unknown>;
+    total?: number | null;
+    createdBy: string;
+  },
+): Promise<Job> {
+  const { data, error } = await client
+    .from("jobs")
+    .insert({
+      project_id: args.projectId,
+      type: args.type,
+      params: (args.params ?? {}) as Json,
+      total: args.total ?? null,
+      created_by: args.createdBy,
+    })
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message, { cause: error });
+  return job.parse(data);
+}
+
+export async function listJobs(client: DbClient, projectId: string): Promise<Job[]> {
+  const { data, error } = await client
+    .from("jobs")
+    .select("*")
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message, { cause: error });
+  return (data ?? []).map((r) => job.parse(r));
+}
+
+export async function getJob(client: DbClient, id: string): Promise<Job | null> {
+  const { data, error } = await client
+    .from("jobs")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message, { cause: error });
+  return data ? job.parse(data) : null;
+}
+
+export async function updateJobProgress(
+  client: DbClient,
+  args: { id: string; completed: number; progress: number },
+): Promise<void> {
+  const { error } = await client
+    .from("jobs")
+    .update({ completed: args.completed, progress: args.progress, status: "running" })
+    .eq("id", args.id);
+  if (error) throw new Error(error.message, { cause: error });
+}
+
+export async function setJobStatus(
+  client: DbClient,
+  args: {
+    id: string;
+    status: "queued" | "running" | "succeeded" | "failed" | "cancelled";
+    error?: string | null;
+    workflowRunId?: string | null;
+  },
+): Promise<Job> {
+  const patch: Database["public"]["Tables"]["jobs"]["Update"] = { status: args.status };
+  if (args.error !== undefined) patch.error = args.error;
+  if (args.workflowRunId !== undefined) patch.workflow_run_id = args.workflowRunId;
+  const { data, error } = await client
+    .from("jobs")
+    .update(patch)
+    .eq("id", args.id)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message, { cause: error });
+  return job.parse(data);
+}
+
+export async function isJobCancelled(client: DbClient, id: string): Promise<boolean> {
+  const j = await getJob(client, id);
+  return j?.status === "cancelled";
 }

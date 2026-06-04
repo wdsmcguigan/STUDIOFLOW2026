@@ -9,6 +9,8 @@ import {
   listElements,
   createCharacter,
   listCharacters,
+  createPerson,
+  setCharacterCast,
   tagSceneElement,
   tagSceneCharacter,
   listSceneTags,
@@ -84,6 +86,16 @@ describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("breakdown data layer â€
   it("createCharacter stores aliases", async () => {
     const c = await createCharacter(alice as never, { projectId: project, primaryName: "MARY", aliases: ["MARY ANN"] });
     expect(c.aliases).toContain("MARY ANN");
+  });
+
+  it("setCharacterCast assigns and clears a person", async () => {
+    const c = await createCharacter(alice as never, { projectId: project, primaryName: "JULIO" });
+    expect(c.cast_person_id).toBeNull();
+    const p = await createPerson(alice as never, { projectId: project, name: "Rodrigo Garcia" });
+    const assigned = await setCharacterCast(alice as never, { characterId: c.id, personId: p.id });
+    expect(assigned.cast_person_id).toBe(p.id);
+    const cleared = await setCharacterCast(alice as never, { characterId: c.id, personId: null });
+    expect(cleared.cast_person_id).toBeNull();
   });
 });
 

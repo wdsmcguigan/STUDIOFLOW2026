@@ -461,6 +461,29 @@ export async function resolveCategoryId(
 }
 
 // ---------------------------------------------------------------------------
+// Character cast assignment (set or clear the cast_person_id link)
+// ---------------------------------------------------------------------------
+
+/**
+ * Assign (or clear) a Person as the cast actor for a Character.
+ * Pass personId=null to clear the cast assignment.
+ * Parse-on-read: returns a typed Character row.
+ */
+export async function setCharacterCast(
+  client: DbClient,
+  args: { characterId: string; personId: string | null },
+): Promise<Character> {
+  const { data, error } = await client
+    .from("characters")
+    .update({ cast_person_id: args.personId })
+    .eq("id", args.characterId)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message, { cause: error });
+  return character.parse(data);
+}
+
+// ---------------------------------------------------------------------------
 // Character merge (atomic RPC — re-points scene links, unions aliases, deletes absorbed)
 // ---------------------------------------------------------------------------
 

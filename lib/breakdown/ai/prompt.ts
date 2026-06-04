@@ -32,6 +32,7 @@ export function buildBreakdownPrompt(args: {
     "- For people, set kind='character' with a presence_type (speaking/silent_featured/background/voice_only); if a name looks like an alias of an existing character, set aliasOf to that character's name.",
     "- For non-human items (props, wardrobe, vehicles, sfx, etc.), set kind='element' with the closest category from the list.",
     "- Optionally include a short `description` (appearance/attributes) for each item.",
+    "- Include a confidence (0.0–1.0) for each item reflecting how certain you are it is literally present in the scene.",
     "",
     "Existing element categories:",
     catalog.categories.map((c) => `- ${c}`).join("\n"),

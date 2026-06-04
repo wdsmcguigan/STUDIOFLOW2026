@@ -10,6 +10,11 @@ import {
   person,
   character,
   element,
+  sceneElement,
+  sceneCharacter,
+  tagSceneElementInput,
+  tagSceneCharacterInput,
+  tagStatus,
   createElementInput,
   createCharacterInput,
   createOrganizationInput,
@@ -20,6 +25,10 @@ import {
   type Person,
   type Character,
   type Element,
+  type SceneElement,
+  type SceneCharacter,
+  type TagSceneElementInput,
+  type TagSceneCharacterInput,
 } from "@/lib/breakdown/schema";
 
 type DbClient = SupabaseClient<Database>;
@@ -258,4 +267,130 @@ export async function listPeople(client: DbClient, projectId: string): Promise<P
     .order("name");
   if (error) throw new Error(error.message, { cause: error });
   return (data ?? []).map((r) => person.parse(r));
+}
+
+// ---------------------------------------------------------------------------
+// Scene tagging (upsert — idempotent on unique (scene_id, element_id) /
+// (scene_id, character_id) constraints from migration 0006)
+// ---------------------------------------------------------------------------
+
+/** Upsert a scene↔element tag (idempotent on (scene_id, element_id)). */
+export async function tagSceneElement(client: DbClient, input: unknown): Promise<SceneElement> {
+  const p = tagSceneElementInput.parse(input);
+  const { data, error } = await client
+    .from("scene_elements")
+    .upsert(
+      {
+        scene_id: p.sceneId,
+        element_id: p.elementId,
+        provenance: p.provenance,
+        status: p.status,
+        confidence: p.confidence,
+        text_anchor: p.textAnchor,
+        anchor_state: p.anchorState,
+        quantity: p.quantity,
+        notes: p.notes,
+      },
+      { onConflict: "scene_id,element_id" },
+    )
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message, { cause: error });
+  return sceneElement.parse(data);
+}
+
+/** Upsert a scene↔character tag (idempotent on (scene_id, character_id)). */
+export async function tagSceneCharacter(client: DbClient, input: unknown): Promise<SceneCharacter> {
+  const p = tagSceneCharacterInput.parse(input);
+  const { data, error } = await client
+    .from("scene_characters")
+    .upsert(
+      {
+        scene_id: p.sceneId,
+        character_id: p.characterId,
+        presence_type: p.presenceType,
+        provenance: p.provenance,
+        status: p.status,
+        confidence: p.confidence,
+        text_anchor: p.textAnchor,
+        anchor_state: p.anchorState,
+        notes: p.notes,
+      },
+      { onConflict: "scene_id,character_id" },
+    )
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message, { cause: error });
+  return sceneCharacter.parse(data);
+}
+
+/** List all scene tags (all statuses) for a scene. */
+export async function listSceneTags(
+  client: DbClient,
+  sceneId: string,
+): Promise<{ elements: SceneElement[]; characters: SceneCharacter[] }> {
+  const [{ data: els, error: e1 }, { data: chs, error: e2 }] = await Promise.all([
+    client.from("scene_elements").select("*").eq("scene_id", sceneId),
+    client.from("scene_characters").select("*").eq("scene_id", sceneId),
+  ]);
+  if (e1) throw new Error(e1.message, { cause: e1 });
+  if (e2) throw new Error(e2.message, { cause: e2 });
+  return {
+    elements: (els ?? []).map((r) => sceneElement.parse(r)),
+    characters: (chs ?? []).map((r) => sceneCharacter.parse(r)),
+  };
+}
+
+/**
+ * THE DOWNSTREAM GATE — schedule/budget (future phases) consume ONLY confirmed
+ * links. Suggested and rejected tags are invisible to downstream consumers.
+ */
+export async function listConfirmedSceneTags(
+  client: DbClient,
+  sceneId: string,
+): Promise<{ elements: SceneElement[]; characters: SceneCharacter[] }> {
+  const [{ data: els, error: e1 }, { data: chs, error: e2 }] = await Promise.all([
+    client.from("scene_elements").select("*").eq("scene_id", sceneId).eq("status", "confirmed"),
+    client.from("scene_characters").select("*").eq("scene_id", sceneId).eq("status", "confirmed"),
+  ]);
+  if (e1) throw new Error(e1.message, { cause: e1 });
+  if (e2) throw new Error(e2.message, { cause: e2 });
+  return {
+    elements: (els ?? []).map((r) => sceneElement.parse(r)),
+    characters: (chs ?? []).map((r) => sceneCharacter.parse(r)),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Status flips (confirm / reject AI suggestions or override manual tags)
+// ---------------------------------------------------------------------------
+
+export async function setSceneElementStatus(
+  client: DbClient,
+  args: { id: string; status: "suggested" | "confirmed" | "rejected" },
+): Promise<SceneElement> {
+  const status = tagStatus.parse(args.status);
+  const { data, error } = await client
+    .from("scene_elements")
+    .update({ status })
+    .eq("id", args.id)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message, { cause: error });
+  return sceneElement.parse(data);
+}
+
+export async function setSceneCharacterStatus(
+  client: DbClient,
+  args: { id: string; status: "suggested" | "confirmed" | "rejected" },
+): Promise<SceneCharacter> {
+  const status = tagStatus.parse(args.status);
+  const { data, error } = await client
+    .from("scene_characters")
+    .update({ status })
+    .eq("id", args.id)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message, { cause: error });
+  return sceneCharacter.parse(data);
 }

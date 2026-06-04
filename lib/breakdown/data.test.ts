@@ -9,6 +9,11 @@ import {
   listElements,
   createCharacter,
   listCharacters,
+  tagSceneElement,
+  tagSceneCharacter,
+  listSceneTags,
+  listConfirmedSceneTags,
+  setSceneElementStatus,
 } from "@/lib/breakdown/data";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -74,6 +79,43 @@ describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("breakdown data layer â€
   it("createCharacter stores aliases", async () => {
     const c = await createCharacter(alice as never, { projectId: project, primaryName: "MARY", aliases: ["MARY ANN"] });
     expect(c.aliases).toContain("MARY ANN");
+  });
+});
+
+describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("tagging + downstream gate", () => {
+  let alice: SupabaseClient<Database>, project: string, sceneId: string, elementId: string, characterId: string;
+  beforeAll(async () => {
+    alice = await makeUser(`alice-${crypto.randomUUID()}@test.dev`);
+    project = await newProject(alice);
+    await seedBreakdownTaxonomy(alice as never, project);
+    const { data: script } = await alice.from("scripts").insert({ project_id: project, title: "S" }).select("id").single();
+    const { data: scene } = await alice.from("scenes").insert({ project_id: project, script_id: script!.id, ordinal: 0, status: "active" }).select("id").single();
+    sceneId = scene!.id;
+    const cats = await listElementCategories(alice as never, project);
+    elementId = (await createElement(alice as never, { projectId: project, categoryId: cats[0].id, name: "gun" })).id;
+    characterId = (await createCharacter(alice as never, { projectId: project, primaryName: "MARY" })).id;
+  });
+  it("manual element tag is confirmed + anchored", async () => {
+    const t = await tagSceneElement(alice as never, { projectId: project, sceneId, elementId, textAnchor: { quote: "gun", prefix: "", suffix: "", hintOffset: null } });
+    expect(t.status).toBe("confirmed"); expect(t.provenance).toBe("manual"); expect(t.anchor_state).toBe("anchored");
+  });
+  it("character tag carries presence_type", async () => {
+    const t = await tagSceneCharacter(alice as never, { projectId: project, sceneId, characterId, presenceType: "speaking" });
+    expect(t.presence_type).toBe("speaking");
+  });
+  it("downstream gate returns only confirmed", async () => {
+    const cats = await listElementCategories(alice as never, project);
+    const sugEl = await createElement(alice as never, { projectId: project, categoryId: cats[0].id, name: "knife" });
+    await tagSceneElement(alice as never, { projectId: project, sceneId, elementId: sugEl.id, provenance: "auto", status: "suggested", confidence: 0.7 });
+    const confirmed = await listConfirmedSceneTags(alice as never, sceneId);
+    expect(confirmed.elements.some((e) => e.element_id === sugEl.id)).toBe(false);
+    expect(confirmed.elements.some((e) => e.element_id === elementId)).toBe(true);
+  });
+  it("setSceneElementStatus flips suggested â†’ confirmed", async () => {
+    const all = await listSceneTags(alice as never, sceneId);
+    const sug = all.elements.find((e) => e.status === "suggested")!;
+    const updated = await setSceneElementStatus(alice as never, { id: sug.id, status: "confirmed" });
+    expect(updated.status).toBe("confirmed");
   });
 });
 

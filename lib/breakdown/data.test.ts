@@ -76,3 +76,26 @@ describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("breakdown data layer â€
     expect(c.aliases).toContain("MARY ANN");
   });
 });
+
+describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("scene-link two-FK escape (0006)", () => {
+  let alice: SupabaseClient<Database>, bob: SupabaseClient<Database>;
+  let aliceElementId: string, bobSceneId: string;
+  beforeAll(async () => {
+    alice = await makeUser(`alice-${crypto.randomUUID()}@test.dev`);
+    bob = await makeUser(`bob-${crypto.randomUUID()}@test.dev`);
+    const aliceProject = await newProject(alice);
+    await seedBreakdownTaxonomy(alice as never, aliceProject);
+    const cats = await listElementCategories(alice as never, aliceProject);
+    const el = await createElement(alice as never, { projectId: aliceProject, categoryId: cats[0].id, name: "alice gun" });
+    aliceElementId = el.id;
+    const bobProject = await newProject(bob);
+    const { data: bobScript } = await bob.from("scripts").insert({ project_id: bobProject, title: "Bob" }).select("id").single();
+    const { data: bobScene } = await bob.from("scenes").insert({ project_id: bobProject, script_id: bobScript!.id, ordinal: 0, status: "active" }).select("id").single();
+    bobSceneId = bobScene!.id;
+  });
+  it("blocks linking your own scene to another user's element", async () => {
+    expect(aliceElementId).toBeTruthy();
+    const { error } = await bob.from("scene_elements").insert({ scene_id: bobSceneId, element_id: aliceElementId });
+    expect(error).not.toBeNull(); // RLS with-check denies the foreign element FK
+  });
+});

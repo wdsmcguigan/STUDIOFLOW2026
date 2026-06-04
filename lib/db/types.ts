@@ -398,6 +398,132 @@ export type Database = {
           },
         ]
       }
+      scene_characters: {
+        Row: {
+          anchor_state: string
+          character_id: string
+          confidence: number | null
+          created_at: string
+          id: string
+          notes: string | null
+          presence_type: string
+          provenance: string
+          scene_id: string
+          segment_id: string | null
+          status: string
+          text_anchor: Json | null
+          updated_at: string
+        }
+        Insert: {
+          anchor_state?: string
+          character_id: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          presence_type: string
+          provenance?: string
+          scene_id: string
+          segment_id?: string | null
+          status?: string
+          text_anchor?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          anchor_state?: string
+          character_id?: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          presence_type?: string
+          provenance?: string
+          scene_id?: string
+          segment_id?: string | null
+          status?: string
+          text_anchor?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scene_characters_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scene_characters_scene_id_fkey"
+            columns: ["scene_id"]
+            isOneToOne: false
+            referencedRelation: "scenes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scene_elements: {
+        Row: {
+          anchor_state: string
+          confidence: number | null
+          created_at: string
+          element_id: string
+          id: string
+          notes: string | null
+          provenance: string
+          quantity: number | null
+          scene_id: string
+          segment_id: string | null
+          status: string
+          text_anchor: Json | null
+          updated_at: string
+        }
+        Insert: {
+          anchor_state?: string
+          confidence?: number | null
+          created_at?: string
+          element_id: string
+          id?: string
+          notes?: string | null
+          provenance?: string
+          quantity?: number | null
+          scene_id: string
+          segment_id?: string | null
+          status?: string
+          text_anchor?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          anchor_state?: string
+          confidence?: number | null
+          created_at?: string
+          element_id?: string
+          id?: string
+          notes?: string | null
+          provenance?: string
+          quantity?: number | null
+          scene_id?: string
+          segment_id?: string | null
+          status?: string
+          text_anchor?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scene_elements_element_id_fkey"
+            columns: ["element_id"]
+            isOneToOne: false
+            referencedRelation: "elements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scene_elements_scene_id_fkey"
+            columns: ["scene_id"]
+            isOneToOne: false
+            referencedRelation: "scenes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scene_revision_changes: {
         Row: {
           change_kind: string

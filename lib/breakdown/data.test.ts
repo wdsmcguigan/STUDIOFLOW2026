@@ -79,7 +79,7 @@ describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("breakdown data layer â€
 
 describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("scene-link two-FK escape (0006)", () => {
   let alice: SupabaseClient<Database>, bob: SupabaseClient<Database>;
-  let aliceElementId: string, bobSceneId: string;
+  let aliceElementId: string, aliceCharacterId: string, bobSceneId: string;
   beforeAll(async () => {
     alice = await makeUser(`alice-${crypto.randomUUID()}@test.dev`);
     bob = await makeUser(`bob-${crypto.randomUUID()}@test.dev`);
@@ -88,6 +88,8 @@ describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("scene-link two-FK escap
     const cats = await listElementCategories(alice as never, aliceProject);
     const el = await createElement(alice as never, { projectId: aliceProject, categoryId: cats[0].id, name: "alice gun" });
     aliceElementId = el.id;
+    const aliceChar = await createCharacter(alice as never, { projectId: aliceProject, primaryName: "ALICE_ONLY" });
+    aliceCharacterId = aliceChar.id;
     const bobProject = await newProject(bob);
     const { data: bobScript } = await bob.from("scripts").insert({ project_id: bobProject, title: "Bob" }).select("id").single();
     const { data: bobScene } = await bob.from("scenes").insert({ project_id: bobProject, script_id: bobScript!.id, ordinal: 0, status: "active" }).select("id").single();
@@ -96,6 +98,13 @@ describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("scene-link two-FK escap
   it("blocks linking your own scene to another user's element", async () => {
     expect(aliceElementId).toBeTruthy();
     const { error } = await bob.from("scene_elements").insert({ scene_id: bobSceneId, element_id: aliceElementId });
-    expect(error).not.toBeNull(); // RLS with-check denies the foreign element FK
+    expect(error).not.toBeNull();
+    expect(error!.code).toBe("42501"); // RLS with-check denied it (not a 23503 FK-constraint error)
+  });
+  it("blocks linking your own scene to another user's character", async () => {
+    expect(aliceCharacterId).toBeTruthy();
+    const { error } = await bob.from("scene_characters").insert({ scene_id: bobSceneId, character_id: aliceCharacterId, presence_type: "speaking" });
+    expect(error).not.toBeNull();
+    expect(error!.code).toBe("42501");
   });
 });

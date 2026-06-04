@@ -556,3 +556,30 @@ export async function isJobCancelled(client: DbClient, id: string): Promise<bool
   const j = await getJob(client, id);
   return j?.status === "cancelled";
 }
+
+// ---------------------------------------------------------------------------
+// Scene text loading (for breakdown job input)
+// Phase 2 approximation: reconstruct scene text from synopsis + header fields.
+// Full body reconstruction (from scene_sources) is a Phase 1.5 / Phase 3 item.
+// ---------------------------------------------------------------------------
+
+/** Load all active scenes for a script, shaped into { id, text } for the AI engine. */
+export async function listScenesForBreakdown(
+  client: DbClient,
+  scriptId: string,
+): Promise<Array<{ id: string; text: string }>> {
+  const { data, error } = await client
+    .from("scenes")
+    .select("id, synopsis, location_slug, int_ext, time_of_day")
+    .eq("script_id", scriptId)
+    .eq("status", "active")
+    .order("ordinal");
+  if (error) throw new Error(error.message, { cause: error });
+  return (data ?? []).map((s) => ({
+    id: s.id,
+    text:
+      [s.int_ext, s.location_slug, s.time_of_day].filter(Boolean).join(". ") +
+      "\n" +
+      (s.synopsis ?? ""),
+  }));
+}

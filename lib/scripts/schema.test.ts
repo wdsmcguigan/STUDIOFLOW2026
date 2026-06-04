@@ -6,6 +6,9 @@ import {
   scene,
   parsedScene,
   sceneDiffEntry,
+  editSceneInput,
+  stageReimportInput,
+  confirmReimportInput,
 } from "@/lib/scripts/schema";
 
 describe("createScriptInput", () => {
@@ -99,5 +102,22 @@ describe("sceneDiffEntry", () => {
       },
     };
     expect(sceneDiffEntry.parse(d).classification).toBe("modified");
+  });
+});
+
+describe("Phase 1 action input schemas", () => {
+  it("editSceneInput coerces empty strings to null and trims", () => {
+    const r = editSceneInput.parse({ int_ext: "INT", location_slug: "", time_of_day: "DAY", synopsis: "", script_day: "" });
+    expect(r).toEqual({ int_ext: "INT", location_slug: null, time_of_day: "DAY", synopsis: null, script_day: null });
+  });
+  it("editSceneInput rejects an invalid int_ext", () => {
+    expect(editSceneInput.safeParse({ int_ext: "INTERIOR" }).success).toBe(false);
+  });
+  it("stageReimportInput requires non-empty source", () => {
+    expect(stageReimportInput.safeParse({ source: "   " }).success).toBe(false);
+    expect(stageReimportInput.parse({ source: "INT. X - DAY\n" }).source).toContain("INT.");
+  });
+  it("confirmReimportInput requires a uuid version id", () => {
+    expect(confirmReimportInput.safeParse({ scriptVersionId: "nope" }).success).toBe(false);
   });
 });

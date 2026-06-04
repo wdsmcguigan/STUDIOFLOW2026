@@ -84,6 +84,28 @@ export const parsedScene = z.object({
 });
 export type ParsedScene = z.infer<typeof parsedScene>;
 
+// ---- Phase 1 action input schemas (parse-at-boundary; fold-in #1) ----------
+const emptyToNull = z.string().trim().transform((s) => (s.length ? s : null)).nullable();
+
+export const editSceneInput = z.object({
+  int_ext: z.preprocess((v) => (v === "" || v == null ? null : v), intExt.nullable()).default(null),
+  location_slug: emptyToNull.default(null),
+  time_of_day: emptyToNull.default(null),
+  synopsis: emptyToNull.default(null),
+  script_day: emptyToNull.default(null),
+});
+export type EditSceneInput = z.infer<typeof editSceneInput>;
+
+export const stageReimportInput = z.object({
+  source: z.string().min(1).refine((s) => s.trim().length > 0, "source is required"),
+});
+export type StageReimportInput = z.infer<typeof stageReimportInput>;
+
+export const confirmReimportInput = z.object({
+  scriptVersionId: z.uuid(),
+});
+export type ConfirmReimportInput = z.infer<typeof confirmReimportInput>;
+
 // ---- Reconciliation diff --------------------------------------------------
 export const sceneClassification = z.enum([
   "unchanged",

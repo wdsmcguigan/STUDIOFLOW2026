@@ -6,12 +6,17 @@ import {
   listCharacters,
   listPeople,
   listOrganizations,
+  listJobs,
 } from "@/lib/breakdown/data";
+import { listScripts } from "@/lib/scripts/data";
 import { BreakdownTabs } from "@/components/breakdown/breakdown-tabs";
 import { ElementsTab } from "@/components/breakdown/elements-tab";
 import { CharactersTab } from "@/components/breakdown/characters-tab";
 import { PeopleTab } from "@/components/breakdown/people-tab";
 import { OrganizationsTab } from "@/components/breakdown/organizations-tab";
+import { JobQueuePanel } from "@/components/breakdown/job-queue-panel";
+import { JobQueuePoller } from "@/components/breakdown/job-queue-poller";
+import { RunAiControl } from "@/components/breakdown/run-ai-control";
 import {
   createElementAction,
   createCharacterAction,
@@ -22,7 +27,8 @@ import {
 } from "./actions";
 
 /**
- * Breakdown catalog page — shows Elements / Characters / People / Orgs tabs.
+ * Breakdown catalog page — shows Elements / Characters / People / Orgs tabs,
+ * a Run-AI control, and an async job-queue panel with live polling.
  * Seeds the taxonomy on every load (idempotent: no-ops if already seeded).
  * All data fetches happen server-side; client components handle interactivity.
  */
@@ -37,15 +43,21 @@ export default async function BreakdownPage({
   // Idempotent seed — safe on every page load
   await seedBreakdownTaxonomy(supabase as never, projectId);
 
-  // Parallel data fetch
-  const [categories, elements, characters, people, organizations] =
+  // Parallel data fetch (scripts uses its own internal client)
+  const [categories, elements, characters, people, organizations, jobs, scripts] =
     await Promise.all([
       listElementCategories(supabase as never, projectId),
       listElements(supabase as never, projectId),
       listCharacters(supabase as never, projectId),
       listPeople(supabase as never, projectId),
       listOrganizations(supabase as never, projectId),
+      listJobs(supabase as never, projectId),
+      listScripts(projectId),
     ]);
+
+  const hasActiveJobs = jobs.some(
+    (j) => j.status === "queued" || j.status === "running",
+  );
 
   return (
     <main className="mx-auto max-w-4xl space-y-6 p-6">
@@ -59,6 +71,22 @@ export default async function BreakdownPage({
           organizations.
         </p>
       </header>
+
+      {/* Run AI breakdown control — sage→amethyst AI surface */}
+      <RunAiControl projectId={projectId} scripts={scripts} />
+
+      {/* Job queue panel */}
+      {jobs.length > 0 && (
+        <section aria-label="AI job queue">
+          <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--tx-3)]">
+            Job queue
+          </h2>
+          <JobQueuePanel projectId={projectId} jobs={jobs} />
+        </section>
+      )}
+
+      {/* Polling: refreshes the page while any job is active */}
+      <JobQueuePoller hasActiveJobs={hasActiveJobs} />
 
       {/* Tabbed catalog */}
       <BreakdownTabs

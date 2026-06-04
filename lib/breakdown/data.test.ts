@@ -16,6 +16,7 @@ import {
   listSceneTags,
   listConfirmedSceneTags,
   setSceneElementStatus,
+  setSceneCharacterStatus,
   mergeCharacter,
   createJob,
   listJobs,
@@ -133,6 +134,18 @@ describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("tagging + downstream ga
     const sug = all.elements.find((e) => e.status === "suggested")!;
     const updated = await setSceneElementStatus(alice as never, { id: sug.id, status: "confirmed" });
     expect(updated.status).toBe("confirmed");
+  });
+  it("setSceneCharacterStatus flips a character tag status to confirmed", async () => {
+    // The character tag created in "character tag carries presence_type" is still present on sceneId.
+    const all = await listSceneTags(alice as never, sceneId);
+    const charTag = all.characters.find((c) => c.character_id === characterId)!;
+    expect(charTag).toBeDefined();
+    // Flip to rejected first so we have a non-confirmed state to flip from.
+    const rejected = await setSceneCharacterStatus(alice as never, { id: charTag.id, status: "rejected" });
+    expect(rejected.status).toBe("rejected");
+    // Now confirm it.
+    const confirmed = await setSceneCharacterStatus(alice as never, { id: charTag.id, status: "confirmed" });
+    expect(confirmed.status).toBe("confirmed");
   });
 });
 

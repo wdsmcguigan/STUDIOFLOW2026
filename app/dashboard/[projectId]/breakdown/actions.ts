@@ -17,6 +17,8 @@ import {
   mergeCharacter,
   tagSceneElement,
   tagSceneCharacter,
+  setSceneElementStatus,
+  setSceneCharacterStatus,
 } from "@/lib/breakdown/data";
 
 const startBreakdownInput = z.object({
@@ -305,6 +307,50 @@ export async function mergeCharacterAction(formData: FormData) {
     return;
   }
   revalidatePath(`/dashboard/${projectId}/breakdown`);
+}
+
+// ---------------------------------------------------------------------------
+// AI suggestion status flip (accept / reject a suggested tag)
+// ---------------------------------------------------------------------------
+
+const setTagStatusSchema = z.object({
+  projectId: z.string().uuid(),
+  kind: z.enum(["element", "character"]),
+  id: z.string().uuid(),
+  status: z.enum(["suggested", "confirmed", "rejected"]),
+  scriptId: z.string().uuid().optional(),
+  sceneId: z.string().uuid().optional(),
+});
+
+export async function setTagStatusAction(formData: FormData) {
+  const parsed = setTagStatusSchema.safeParse({
+    projectId: formData.get("projectId"),
+    kind: formData.get("kind"),
+    id: formData.get("id"),
+    status: formData.get("status"),
+    scriptId: formData.get("scriptId") || undefined,
+    sceneId: formData.get("sceneId") || undefined,
+  });
+  if (!parsed.success) {
+    console.error("[setTagStatusAction]", parsed.error.flatten());
+    return;
+  }
+  const { projectId, kind, id, status, scriptId, sceneId } = parsed.data;
+  try {
+    const supabase = await createClient();
+    if (kind === "element") {
+      await setSceneElementStatus(supabase as never, { id, status });
+    } else {
+      await setSceneCharacterStatus(supabase as never, { id, status });
+    }
+  } catch (err) {
+    console.error("[setTagStatusAction]", err);
+    return;
+  }
+  revalidatePath(`/dashboard/${projectId}/breakdown`);
+  if (scriptId && sceneId) {
+    revalidatePath(`/dashboard/${projectId}/scripts/${scriptId}/scenes/${sceneId}`);
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -753,7 +753,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      merge_characters: {
+        Args: { p_absorbed: string; p_survivor: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

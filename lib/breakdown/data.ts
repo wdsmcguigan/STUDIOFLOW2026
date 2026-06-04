@@ -19,6 +19,7 @@ import {
   createCharacterInput,
   createOrganizationInput,
   createPersonInput,
+  mergeCharactersInput,
   type Department,
   type ElementCategory,
   type Organization,
@@ -393,4 +394,14 @@ export async function setSceneCharacterStatus(
     .single();
   if (error) throw new Error(error.message, { cause: error });
   return sceneCharacter.parse(data);
+}
+
+// ---------------------------------------------------------------------------
+// Character merge (atomic RPC — re-points scene links, unions aliases, deletes absorbed)
+// ---------------------------------------------------------------------------
+
+export async function mergeCharacter(client: DbClient, input: unknown): Promise<void> {
+  const p = mergeCharactersInput.parse(input);
+  const { error } = await client.rpc("merge_characters", { p_survivor: p.survivorId, p_absorbed: p.absorbedId });
+  if (error) throw new Error(error.message, { cause: error });
 }

@@ -14,6 +14,7 @@ import {
   listSceneTags,
   listConfirmedSceneTags,
   setSceneElementStatus,
+  mergeCharacter,
 } from "@/lib/breakdown/data";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -148,5 +149,56 @@ describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("scene-link two-FK escap
     const { error } = await bob.from("scene_characters").insert({ scene_id: bobSceneId, character_id: aliceCharacterId, presence_type: "speaking" });
     expect(error).not.toBeNull();
     expect(error!.code).toBe("42501");
+  });
+});
+
+describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("character merge (0007)", () => {
+  let alice: SupabaseClient<Database>, project: string, sceneId: string;
+  beforeAll(async () => {
+    alice = await makeUser(`alice-${crypto.randomUUID()}@test.dev`);
+    project = await newProject(alice);
+    const { data: script } = await alice.from("scripts").insert({ project_id: project, title: "S" }).select("id").single();
+    const { data: scene } = await alice.from("scenes").insert({ project_id: project, script_id: script!.id, ordinal: 0, status: "active" }).select("id").single();
+    sceneId = scene!.id;
+  });
+
+  it("re-points links + unions aliases + deletes absorbed", async () => {
+    const bob = await createCharacter(alice as never, { projectId: project, primaryName: "BOB", aliases: ["BOBBY"] });
+    const robert = await createCharacter(alice as never, { projectId: project, primaryName: "ROBERT" });
+    await tagSceneCharacter(alice as never, { projectId: project, sceneId, characterId: robert.id, presenceType: "speaking" });
+    await mergeCharacter(alice as never, { projectId: project, survivorId: bob.id, absorbedId: robert.id });
+    const chars = await listCharacters(alice as never, project);
+    expect(chars.some((c) => c.id === robert.id)).toBe(false);
+    const survivor = chars.find((c) => c.id === bob.id)!;
+    expect(survivor.aliases).toEqual(expect.arrayContaining(["BOBBY", "ROBERT"]));
+    const tags = await listSceneTags(alice as never, sceneId);
+    expect(tags.characters.some((t) => t.character_id === bob.id)).toBe(true);
+    expect(tags.characters.some((t) => t.character_id === robert.id)).toBe(false);
+  });
+
+  it("self-merge guard rejects at Zod layer before the RPC", async () => {
+    const charlie = await createCharacter(alice as never, { projectId: project, primaryName: "CHARLIE" });
+    await expect(
+      mergeCharacter(alice as never, { projectId: project, survivorId: charlie.id, absorbedId: charlie.id }),
+    ).rejects.toThrow();
+  });
+
+  it("dedupe: merging when both characters are in the same scene produces exactly one link", async () => {
+    // Create a fresh scene so we're not polluting the shared sceneId
+    const { data: script2 } = await alice.from("scripts").insert({ project_id: project, title: "S2" }).select("id").single();
+    const { data: scene2 } = await alice.from("scenes").insert({ project_id: project, script_id: script2!.id, ordinal: 1, status: "active" }).select("id").single();
+    const dedupSceneId = scene2!.id;
+
+    const dan = await createCharacter(alice as never, { projectId: project, primaryName: "DAN" });
+    const daniel = await createCharacter(alice as never, { projectId: project, primaryName: "DANIEL" });
+    // Tag BOTH in the same scene — this would cause a unique-constraint violation if merge isn't deduping
+    await tagSceneCharacter(alice as never, { projectId: project, sceneId: dedupSceneId, characterId: dan.id, presenceType: "speaking" });
+    await tagSceneCharacter(alice as never, { projectId: project, sceneId: dedupSceneId, characterId: daniel.id, presenceType: "silent_featured" });
+    // Should not throw despite the potential duplicate (survivor link already exists)
+    await mergeCharacter(alice as never, { projectId: project, survivorId: dan.id, absorbedId: daniel.id });
+    const tags = await listSceneTags(alice as never, dedupSceneId);
+    const danLinks = tags.characters.filter((t) => t.character_id === dan.id);
+    expect(danLinks).toHaveLength(1); // exactly one survivor link, no duplicate
+    expect(tags.characters.some((t) => t.character_id === daniel.id)).toBe(false);
   });
 });

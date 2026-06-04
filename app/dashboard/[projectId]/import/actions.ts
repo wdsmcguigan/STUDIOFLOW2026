@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createScript, applyFirstImport, seedRevisions, stageReimport, applyReconciledImport, getScript } from "@/lib/scripts/data";
 import { parseFountain } from "@/lib/scripts/fountain";
 import { stageReimportInput, confirmReimportInput } from "@/lib/scripts/schema";
+import { reanchorSceneTags } from "@/lib/breakdown/reanchor";
 
 export async function importScriptAction(projectId: string, formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
@@ -74,11 +75,17 @@ export async function confirmReimportAction(
   if (!parsedInput.success) return;
   const scriptVersionId = parsedInput.data.scriptVersionId;
   try {
-    await applyReconciledImport({
+    const applied = await applyReconciledImport({
       projectId: ctx.projectId,
       scriptId: ctx.scriptId,
       scriptVersionId,
     });
+    const supabase = await createClient();
+    for (const entry of applied.diff) {
+      if (entry.sceneId && entry.parsed && (entry.classification === "modified" || entry.classification === "conflict")) {
+        await reanchorSceneTags(supabase as unknown as never, entry.sceneId, entry.parsed.bodyText);
+      }
+    }
   } catch (err) {
     console.error("[confirmReimportAction]", err);
     return;

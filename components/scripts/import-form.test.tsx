@@ -8,11 +8,9 @@ describe("ImportForm", () => {
     const action = vi.fn().mockResolvedValue(undefined);
     render(<ImportForm action={action} />);
 
-    await userEvent.type(screen.getByPlaceholderText("Script title"), "Pilot");
-    await userEvent.type(
-      screen.getByPlaceholderText("Paste Fountain source here"),
-      "INT. DINER - DAY",
-    );
+    // Locate inputs by their accessible label (robust to placeholder copy changes).
+    await userEvent.type(screen.getByLabelText(/script title/i), "Pilot");
+    await userEvent.type(screen.getByLabelText(/fountain source/i), "INT. DINER - DAY");
     await userEvent.click(screen.getByRole("button", { name: /import/i }));
 
     expect(action).toHaveBeenCalled();

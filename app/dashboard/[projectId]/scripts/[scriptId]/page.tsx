@@ -21,22 +21,40 @@ export default async function ScriptPage({
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{script.title}</h1>
+      {/* Page header */}
+      <div>
+        <h1 className="font-display text-2xl font-extrabold tracking-[-0.3px]">
+          {script.title}
+        </h1>
+        <p className="font-data mt-0.5 text-[11px] text-[var(--tx-3)]">
+          {scenes.length} {scenes.length === 1 ? "scene" : "scenes"}
+        </p>
       </div>
+
+      {/* Stripboard scene list */}
       <SceneList projectId={projectId} scriptId={scriptId} scenes={scenes} />
-      <details>
-        <summary className="cursor-pointer text-sm underline">Re-import a revised draft</summary>
-        <div className="mt-3">
+
+      {/* Re-import disclosure */}
+      <details className="group rounded-lg border border-[var(--line)] bg-[var(--s1)]">
+        <summary className="cursor-pointer select-none px-4 py-3 text-sm font-medium text-[var(--tx-2)] hover:text-[var(--tx)] focus-visible:outline-2 focus-visible:outline-[var(--ring)]">
+          Re-import a revised draft
+        </summary>
+        <div className="border-t border-[var(--line)] px-4 pb-4 pt-3">
           <ImportForm action={stageReimport} />
         </div>
       </details>
+
+      {/* Raw source read view */}
       {version ? (
-        <details>
-          <summary className="cursor-pointer text-sm text-muted-foreground">
+        <details className="group rounded-lg border border-[var(--line)] bg-[var(--s1)]">
+          <summary className="cursor-pointer select-none px-4 py-3 text-sm text-[var(--tx-3)] hover:text-[var(--tx-2)] focus-visible:outline-2 focus-visible:outline-[var(--ring)]">
             Read view (raw source)
           </summary>
-          <pre className="mt-2 whitespace-pre-wrap font-mono text-sm">{version.raw_source}</pre>
+          <div className="border-t border-[var(--line)] px-4 pb-4 pt-3">
+            <pre className="font-data overflow-x-auto text-[12px] leading-relaxed whitespace-pre-wrap text-[var(--tx-2)]">
+              {version.raw_source}
+            </pre>
+          </div>
         </details>
       ) : null}
     </main>

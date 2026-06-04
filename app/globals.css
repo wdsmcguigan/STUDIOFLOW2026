@@ -46,75 +46,192 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  /* Tungsten & Sage font stack */
+  --font-display: var(--font-bricolage);
+  --font-sans: var(--font-hanken);
+  --font-mono: var(--font-jetbrains);
 }
 
+/* ==========================================================================
+   StudioFlow — Tungsten & Sage Design Tokens
+   Light theme: "Kraft"  (:root, default)
+   Dark theme:  "Umber"  (.dark)
+
+   Raw tokens → shadcn semantic mapping.
+   next-themes uses attribute="class" with `.dark`; so :root = light, .dark = dark.
+   The dark theme is the brand default (applied by layout in Task 2).
+   ========================================================================== */
+
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* ------------------------------------------------------------------
+     Kraft — Light palette raw tokens
+     ------------------------------------------------------------------ */
+  --bg: #efe7d8;
+  --s1: #f8f1e4;
+  --s2: #fcf7ee;
+  --s3: #eadfcc;
+  --line: rgba(64,46,24,.10);
+  --line-2: rgba(64,46,24,.15);
+  --tx: #2d2418;
+  --tx-2: rgba(45,36,24,.62);
+  --tx-3: rgba(45,36,24,.42);
+
+  /* Brand — Tungsten amber (deepened for contrast on light) */
+  --brand: #bf6a2e;
+  --brand-2: #d98a3f;
+  --brand-ink: #ffffff;
+  --brand-on: #a4541d;
+  --brand-soft: rgba(191,106,46,.14);
+  --brand-line: rgba(191,106,46,.34);
+
+  /* Film grain opacity */
+  --grain: 0.30;
+
+  /* AI — sage→amethyst gradient (light variant, deeper for contrast) */
+  --ai-grad: linear-gradient(120deg,#2f9e6e 0%,#3f9e82 28%,#5a89c0 56%,#7a64c8 78%,#9a47c0 100%);
+  --ai-ink: #3f8a6a;
+  --ai-glass: rgba(255,255,255,.55);
+  --ai-glow-out: rgba(80,150,120,.5);
+  --ai-glow-in: rgba(120,80,195,.10);
+  --ai-glow-halo: rgba(140,72,200,.09);
+  --ai-shadow: inset 0 0 12px var(--ai-glow-in), 0 0 10px var(--ai-glow-halo), inset 0 1px 0 rgba(255,255,255,.55);
+  --ai-shadow-sm: inset 0 0 8px var(--ai-glow-in), 0 0 6px var(--ai-glow-halo);
+
+  /* Status — reserved, never decorative */
+  --ok: #3f7d4a;
+  --warn: #b07a1e;
+  --error: #b03a2e;
+
+  /* Category spines — INT/EXT × day-part (light values) */
+  --cat-int-day: #c2873a;
+  --cat-int-night: #4f80a8;
+  --cat-ext-day: #4a8c58;
+  --cat-ext-night: #7055a8;
+
+  /* Radius */
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  /* ------------------------------------------------------------------
+     shadcn semantic mapping (identical var() lines in :root and .dark;
+     only the raw tokens above differ between themes)
+     ------------------------------------------------------------------ */
+  --background: var(--bg);
+  --foreground: var(--tx);
+  --card: var(--s2);
+  --card-foreground: var(--tx);
+  --popover: var(--s3);
+  --popover-foreground: var(--tx);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-ink);
+  --secondary: var(--s3);
+  --secondary-foreground: var(--tx);
+  --muted: var(--s1);
+  --muted-foreground: var(--tx-3);
+  --accent: var(--brand-soft);
+  --accent-foreground: var(--brand);
+  --destructive: var(--error);
+  --border: var(--line);
+  --input: var(--line-2);
+  --ring: var(--brand);
+  --chart-1: var(--cat-int-day);
+  --chart-2: var(--cat-ext-day);
+  --chart-3: var(--cat-int-night);
+  --chart-4: var(--cat-ext-night);
+  --chart-5: var(--ok);
+  --sidebar: var(--s1);
+  --sidebar-foreground: var(--tx);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-ink);
+  --sidebar-accent: var(--brand-soft);
+  --sidebar-accent-foreground: var(--brand);
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--brand);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* ------------------------------------------------------------------
+     Umber — Dark palette raw tokens (brand default)
+     ------------------------------------------------------------------ */
+  --bg: #14110c;
+  --s1: #1a1610;
+  --s2: #221c14;
+  --s3: #2c2418;
+  --line: rgba(255,236,205,.08);
+  --line-2: rgba(255,236,205,.14);
+  --tx: #f3ece1;
+  --tx-2: rgba(243,236,225,.62);
+  --tx-3: rgba(243,236,225,.42);
+
+  /* Brand — Tungsten amber */
+  --brand: #f4a93c;
+  --brand-2: #e07a3a;
+  --brand-ink: #1d1303;
+  --brand-on: #f4a93c;
+  --brand-soft: rgba(244,169,60,.16);
+  --brand-line: rgba(244,169,60,.36);
+
+  /* Film grain opacity */
+  --grain: 0.55;
+
+  /* AI — sage→amethyst gradient (dark variant) */
+  --ai-grad: linear-gradient(120deg,#4fe0a0 0%,#56cf94 30%,#6fb0cf 52%,#8a8ee8 74%,#b073f0 100%);
+  --ai-ink: #9fe0c0;
+  --ai-glass: rgba(40,50,50,.5);
+  --ai-glow-out: rgba(110,200,180,.5);
+  --ai-glow-in: rgba(150,128,228,.12);
+  --ai-glow-halo: rgba(165,108,235,.11);
+  --ai-shadow: inset 0 0 13px var(--ai-glow-in), 0 0 12px var(--ai-glow-halo), inset 0 1px 0 rgba(255,255,255,.06);
+  --ai-shadow-sm: inset 0 0 9px var(--ai-glow-in), 0 0 7px var(--ai-glow-halo);
+
+  /* Status — reserved, never decorative */
+  --ok: #5fb87a;
+  --warn: #e8b14a;
+  --error: #d2685f;
+
+  /* Category spines — INT/EXT × day-part */
+  --cat-int-day: #e0a04a;
+  --cat-int-night: #6aa9e0;
+  --cat-ext-day: #5fb87a;
+  --cat-ext-night: #9a7fd0;
+
+  /* Radius (same in both themes) */
+  --radius: 0.625rem;
+
+  /* ------------------------------------------------------------------
+     shadcn semantic mapping (identical var() lines in :root and .dark;
+     only the raw tokens above differ between themes)
+     ------------------------------------------------------------------ */
+  --background: var(--bg);
+  --foreground: var(--tx);
+  --card: var(--s2);
+  --card-foreground: var(--tx);
+  --popover: var(--s3);
+  --popover-foreground: var(--tx);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-ink);
+  --secondary: var(--s3);
+  --secondary-foreground: var(--tx);
+  --muted: var(--s1);
+  --muted-foreground: var(--tx-3);
+  --accent: var(--brand-soft);
+  --accent-foreground: var(--brand);
+  --destructive: var(--error);
+  --border: var(--line);
+  --input: var(--line-2);
+  --ring: var(--brand);
+  --chart-1: var(--cat-int-day);
+  --chart-2: var(--cat-ext-day);
+  --chart-3: var(--cat-int-night);
+  --chart-4: var(--cat-ext-night);
+  --chart-5: var(--ok);
+  --sidebar: var(--s1);
+  --sidebar-foreground: var(--tx);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-ink);
+  --sidebar-accent: var(--brand-soft);
+  --sidebar-accent-foreground: var(--brand);
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--brand);
 }
 
 @layer base {
@@ -127,4 +244,82 @@
   html {
     @apply font-sans;
   }
+}
+
+/* ==========================================================================
+   Utility classes — Tungsten & Sage signature devices
+   ========================================================================== */
+
+@layer utilities {
+  /* Tabular / data typography */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* JetBrains Mono for data fields (scene numbers, page eighths, timecode, budget) */
+  .font-data {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Bricolage Grotesque for display / page titles */
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  /* Tungsten filament — 1px amber hairline with soft glow.
+     Used under the wordmark and as the active-nav left-bar indicator.
+     Apply as a ::after pseudo or standalone element. */
+  .filament {
+    background: linear-gradient(90deg, transparent, var(--brand), transparent);
+    box-shadow: 0 0 8px var(--brand), 0 0 4px var(--brand);
+    height: 1px;
+    opacity: 0.9;
+  }
+
+  /* Ember-duotone fill — brand mark and primary buttons */
+  .ember {
+    background: linear-gradient(140deg, var(--brand), var(--brand-2));
+  }
+
+  /* AI surface — frosted glass with gradient border + composite glow.
+     Spec §3.3: neutral frosted glass fill, gradient border via border-box trick,
+     composite glow. No sparkle icon. No gradient fill on the whole shape. */
+  .ai-surface {
+    background: var(--ai-glass) padding-box, var(--ai-grad) border-box;
+    border: 1px solid transparent;
+    -webkit-backdrop-filter: blur(12px) saturate(135%);
+    backdrop-filter: blur(12px) saturate(135%);
+    box-shadow: var(--ai-shadow);
+  }
+}
+
+/* ==========================================================================
+   Reduced transparency: drop grain/glass to solid fallbacks.
+   Gates backdrop-filter and the glass fill behind the a11y preference.
+   ========================================================================== */
+
+@media (prefers-reduced-transparency: reduce) {
+  .ai-surface {
+    background: var(--s2);
+    border-color: var(--line-2);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+}
+
+/* ==========================================================================
+   Density spacing hooks
+   Scene rows / table cells use .row-pad; compact collapses vertical rhythm.
+   ========================================================================== */
+
+.row-pad {
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+}
+
+[data-density="compact"] .row-pad {
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
 }

@@ -8,7 +8,7 @@ function SubmitButton() {
   // create duplicate projects.
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending} aria-disabled={pending}>
+    <Button variant="ember" type="submit" disabled={pending} aria-disabled={pending}>
       {pending ? "Creating…" : "Create"}
     </Button>
   );

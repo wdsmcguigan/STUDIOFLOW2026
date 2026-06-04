@@ -8,7 +8,11 @@ export function DensityToggle() {
   const [density, setDensity] = useState<Density>("comfortable");
 
   useEffect(() => {
+    // One-time sync from the persisted external store (localStorage) on mount.
+    // SSR can't read localStorage, so this must happen in an effect, not a lazy
+    // initializer — the intended use of the escape hatch.
     const saved = (localStorage.getItem("sf-density") as Density) || "comfortable";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDensity(saved);
     document.documentElement.setAttribute("data-density", saved);
   }, []);

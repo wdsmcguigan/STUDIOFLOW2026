@@ -252,4 +252,17 @@ describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("jobs data layer (0008)"
     const bobView = await listJobs(bob as never, project).catch(() => []);
     expect(bobView).toHaveLength(0);
   });
+
+  it("setJobStatus persists status='failed' AND error message (round-trip via listJobs)", async () => {
+    const { data: me } = await alice.auth.getUser();
+    const j = await createJob(alice as never, { projectId: project, type: "breakdown", params: { sceneIds: [sceneId] }, total: 3, createdBy: me.user!.id });
+    expect(j.status).toBe("queued");
+    const failed = await setJobStatus(alice as never, { id: j.id, status: "failed", error: "boom" });
+    expect(failed.status).toBe("failed");
+    expect(failed.error).toBe("boom");
+    const jobs = await listJobs(alice as never, project);
+    const found = jobs.find((jj) => jj.id === j.id)!;
+    expect(found.status).toBe("failed");
+    expect(found.error).toBe("boom");
+  });
 });

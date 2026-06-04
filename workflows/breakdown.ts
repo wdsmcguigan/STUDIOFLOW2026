@@ -26,18 +26,23 @@ export async function breakdownWorkflow(input: {
   "use workflow";
   const total = input.scenes.length;
   let completed = 0;
-  for (const scene of input.scenes) {
-    if (await checkCancelled(input.jobId)) return { cancelled: true, completed };
-    await breakdownSceneStep({
-      projectId: input.projectId,
-      sceneId: scene.id,
-      sceneText: scene.text,
-    });
-    completed += 1;
-    await reportProgress({ jobId: input.jobId, completed, total });
+  try {
+    for (const scene of input.scenes) {
+      if (await checkCancelled(input.jobId)) return { cancelled: true, completed };
+      await breakdownSceneStep({
+        projectId: input.projectId,
+        sceneId: scene.id,
+        sceneText: scene.text,
+      });
+      completed += 1;
+      await reportProgress({ jobId: input.jobId, completed, total });
+    }
+    await finalize({ jobId: input.jobId });
+    return { cancelled: false, completed };
+  } catch (err) {
+    await failJob({ jobId: input.jobId, message: err instanceof Error ? err.message : String(err) });
+    return { cancelled: false, failed: true, completed };
   }
-  await finalize({ jobId: input.jobId });
-  return { cancelled: false, completed };
 }
 
 async function breakdownSceneStep(args: {
@@ -100,5 +105,14 @@ async function finalize(args: { jobId: string }) {
   await setJobStatus(createServiceClient() as never, {
     id: args.jobId,
     status: "succeeded",
+  });
+}
+
+async function failJob(args: { jobId: string; message: string }) {
+  "use step";
+  await setJobStatus(createServiceClient() as never, {
+    id: args.jobId,
+    status: "failed",
+    error: args.message,
   });
 }

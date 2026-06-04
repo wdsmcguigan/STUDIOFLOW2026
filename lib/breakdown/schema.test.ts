@@ -7,7 +7,6 @@ import {
   anchorState,
   createElementInput,
   character,
-  sceneElement,
 } from "@/lib/breakdown/schema";
 
 describe("breakdown schema", () => {

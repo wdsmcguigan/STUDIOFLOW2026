@@ -29,8 +29,6 @@ import {
   type Element,
   type SceneElement,
   type SceneCharacter,
-  type TagSceneElementInput,
-  type TagSceneCharacterInput,
   type Job,
 } from "@/lib/breakdown/schema";
 

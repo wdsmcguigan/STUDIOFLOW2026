@@ -397,6 +397,68 @@ export async function setSceneCharacterStatus(
 }
 
 // ---------------------------------------------------------------------------
+// Find-or-create helpers (idempotent catalog deduplication by normalized name)
+// ---------------------------------------------------------------------------
+
+/** Module-private normalizer: trim + lowercase for dedup comparisons. */
+function norm(s: string): string {
+  return s.trim().toLowerCase();
+}
+
+/** Find an element by (project, category, normalized name) or create it. */
+export async function findOrCreateElement(
+  client: DbClient,
+  args: { projectId: string; categoryId: string; name: string; description?: string | null },
+): Promise<Element> {
+  const existing = await listElements(client, args.projectId);
+  const hit = existing.find(
+    (e) => e.category_id === args.categoryId && norm(e.name) === norm(args.name),
+  );
+  if (hit) return hit;
+  return createElement(client, {
+    projectId: args.projectId,
+    categoryId: args.categoryId,
+    name: args.name,
+    description: args.description ?? null,
+    vendorOrgId: null,
+  });
+}
+
+/** Find a character by normalized primary_name or any alias, else create. */
+export async function findOrCreateCharacter(
+  client: DbClient,
+  args: { projectId: string; name: string; description?: string | null },
+): Promise<Character> {
+  const existing = await listCharacters(client, args.projectId);
+  const n = norm(args.name);
+  const hit = existing.find(
+    (c) => norm(c.primary_name) === n || c.aliases.some((a) => norm(a) === n),
+  );
+  if (hit) return hit;
+  return createCharacter(client, {
+    projectId: args.projectId,
+    primaryName: args.name,
+    aliases: [],
+    description: args.description ?? null,
+  });
+}
+
+/** Map a free-text AI category to a project category id (best-effort, normalized).
+ *  Falls back to "Notes" category if no exact match found. */
+export async function resolveCategoryId(
+  client: DbClient,
+  projectId: string,
+  categoryName: string,
+): Promise<string | null> {
+  const cats = await listElementCategories(client, projectId);
+  return (
+    cats.find((c) => norm(c.name) === norm(categoryName))?.id ??
+    cats.find((c) => norm(c.name) === "notes")?.id ??
+    null
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Character merge (atomic RPC — re-points scene links, unions aliases, deletes absorbed)
 // ---------------------------------------------------------------------------
 

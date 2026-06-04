@@ -308,3 +308,18 @@
     box-shadow: none;
   }
 }
+
+/* ==========================================================================
+   Density spacing hooks
+   Scene rows / table cells use .row-pad; compact collapses vertical rhythm.
+   ========================================================================== */
+
+.row-pad {
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+}
+
+[data-density="compact"] .row-pad {
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+}

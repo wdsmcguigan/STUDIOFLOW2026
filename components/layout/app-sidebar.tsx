@@ -75,7 +75,7 @@ const GROUPS: NavGroup[] = [
     label: "Plan",
     items: [
       { href: "schedule", label: "Schedule", icon: CalendarDays, soon: true },
-      { href: "budget", label: "Budget", icon: DollarSign, soon: true },
+      { href: "budget", label: "Budget", icon: DollarSign },
       {
         href: "call-sheets",
         label: "Call Sheets",

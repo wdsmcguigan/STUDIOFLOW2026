@@ -34,6 +34,243 @@ export type Database = {
   }
   public: {
     Tables: {
+      budget_accounts: {
+        Row: {
+          budget_id: string
+          code: string
+          created_at: string
+          id: string
+          name: string
+          ordinal: number
+          parent_account_id: string | null
+          section: string
+          updated_at: string
+        }
+        Insert: {
+          budget_id: string
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          ordinal?: number
+          parent_account_id?: string | null
+          section?: string
+          updated_at?: string
+        }
+        Update: {
+          budget_id?: string
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          ordinal?: number
+          parent_account_id?: string | null
+          section?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_accounts_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_accounts_parent_account_id_fkey"
+            columns: ["parent_account_id"]
+            isOneToOne: false
+            referencedRelation: "budget_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_globals: {
+        Row: {
+          budget_id: string
+          created_at: string
+          id: string
+          kind: string
+          name: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          budget_id: string
+          created_at?: string
+          id?: string
+          kind?: string
+          name: string
+          updated_at?: string
+          value?: number
+        }
+        Update: {
+          budget_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          name?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_globals_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_line_fringes: {
+        Row: {
+          budget_id: string
+          fringe_id: string
+          line_id: string
+        }
+        Insert: {
+          budget_id: string
+          fringe_id: string
+          line_id: string
+        }
+        Update: {
+          budget_id?: string
+          fringe_id?: string
+          line_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_line_fringes_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_line_fringes_fringe_id_fkey"
+            columns: ["fringe_id"]
+            isOneToOne: false
+            referencedRelation: "fringes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_line_fringes_line_id_fkey"
+            columns: ["line_id"]
+            isOneToOne: false
+            referencedRelation: "budget_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_lines: {
+        Row: {
+          account_id: string
+          budget_id: string
+          created_at: string
+          description: string
+          id: string
+          ordinal: number
+          quantity: number | null
+          quantity_source: Json | null
+          rate: number | null
+          rate_global_id: string | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          budget_id: string
+          created_at?: string
+          description?: string
+          id?: string
+          ordinal?: number
+          quantity?: number | null
+          quantity_source?: Json | null
+          rate?: number | null
+          rate_global_id?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          budget_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          ordinal?: number
+          quantity?: number | null
+          quantity_source?: Json | null
+          rate?: number | null
+          rate_global_id?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_lines_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "budget_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lines_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_lines_rate_global_id_fkey"
+            columns: ["rate_global_id"]
+            isOneToOne: false
+            referencedRelation: "budget_globals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          contingency_basis: string
+          contingency_percent: number
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          contingency_basis?: string
+          contingency_percent?: number
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          contingency_basis?: string
+          contingency_percent?: number
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cast_day_statuses: {
         Row: {
           created_at: string
@@ -129,6 +366,64 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cost_entries: {
+        Row: {
+          account_id: string
+          amount: number
+          budget_id: string
+          created_at: string
+          created_by: string
+          entry_date: string
+          id: string
+          line_id: string | null
+          note: string | null
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          budget_id: string
+          created_at?: string
+          created_by?: string
+          entry_date: string
+          id?: string
+          line_id?: string | null
+          note?: string | null
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          budget_id?: string
+          created_at?: string
+          created_by?: string
+          entry_date?: string
+          id?: string
+          line_id?: string | null
+          note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_entries_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "budget_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cost_entries_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cost_entries_line_id_fkey"
+            columns: ["line_id"]
+            isOneToOne: false
+            referencedRelation: "budget_lines"
             referencedColumns: ["id"]
           },
         ]
@@ -273,6 +568,41 @@ export type Database = {
             columns: ["vendor_org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fringes: {
+        Row: {
+          budget_id: string
+          created_at: string
+          id: string
+          name: string
+          percent: number
+          updated_at: string
+        }
+        Insert: {
+          budget_id: string
+          created_at?: string
+          id?: string
+          name: string
+          percent?: number
+          updated_at?: string
+        }
+        Update: {
+          budget_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          percent?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fringes_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
             referencedColumns: ["id"]
           },
         ]
@@ -1112,6 +1442,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      budget_account_parent_owned_by: {
+        Args: { p_parent_id: string; p_user_id: string }
+        Returns: boolean
+      }
       merge_characters: {
         Args: { p_absorbed: string; p_survivor: string }
         Returns: undefined

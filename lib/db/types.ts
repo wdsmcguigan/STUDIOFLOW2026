@@ -34,6 +34,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      cast_day_statuses: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          note: string | null
+          person_id: string
+          project_id: string
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          note?: string | null
+          person_id: string
+          project_id: string
+          source?: string
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          note?: string | null
+          person_id?: string
+          project_id?: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cast_day_statuses_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cast_day_statuses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       characters: {
         Row: {
           aliases: string[]
@@ -278,6 +329,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "jobs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          address: string | null
+          created_at: string
+          geo_lat: number | null
+          geo_lng: number | null
+          id: string
+          name: string
+          project_id: string
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          geo_lat?: number | null
+          geo_lng?: number | null
+          id?: string
+          name: string
+          project_id: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          geo_lat?: number | null
+          geo_lng?: number | null
+          id?: string
+          name?: string
+          project_id?: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
@@ -619,6 +714,54 @@ export type Database = {
           },
         ]
       }
+      scene_segments: {
+        Row: {
+          created_at: string
+          id: string
+          label: string | null
+          ordinal: number
+          page_eighths: number
+          project_id: string
+          scene_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          ordinal?: number
+          page_eighths?: number
+          project_id: string
+          scene_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          ordinal?: number
+          page_eighths?: number
+          project_id?: string
+          scene_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scene_segments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scene_segments_scene_id_fkey"
+            columns: ["scene_id"]
+            isOneToOne: false
+            referencedRelation: "scenes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scene_sources: {
         Row: {
           content_hash: string
@@ -671,6 +814,7 @@ export type Database = {
           scene_number: string | null
           script_day: string | null
           script_id: string
+          set_id: string | null
           status: string
           synopsis: string | null
           time_of_day: string | null
@@ -688,6 +832,7 @@ export type Database = {
           scene_number?: string | null
           script_day?: string | null
           script_id: string
+          set_id?: string | null
           status?: string
           synopsis?: string | null
           time_of_day?: string | null
@@ -705,6 +850,7 @@ export type Database = {
           scene_number?: string | null
           script_day?: string | null
           script_id?: string
+          set_id?: string | null
           status?: string
           synopsis?: string | null
           time_of_day?: string | null
@@ -723,6 +869,13 @@ export type Database = {
             columns: ["script_id"]
             isOneToOne: false
             referencedRelation: "scripts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scenes_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "sets"
             referencedColumns: ["id"]
           },
         ]
@@ -803,6 +956,153 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sets: {
+        Row: {
+          created_at: string
+          id: string
+          location_id: string | null
+          name: string
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          name: string
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          name?: string
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sets_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shoot_days: {
+        Row: {
+          created_at: string
+          date: string | null
+          day_type: string
+          id: string
+          name: string | null
+          ordinal: number
+          project_id: string
+          studio_or_location: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string | null
+          day_type?: string
+          id?: string
+          name?: string | null
+          ordinal?: number
+          project_id: string
+          studio_or_location?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string | null
+          day_type?: string
+          id?: string
+          name?: string | null
+          ordinal?: number
+          project_id?: string
+          studio_or_location?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shoot_days_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      strips: {
+        Row: {
+          banner_text: string | null
+          created_at: string
+          id: string
+          ordinal: number
+          project_id: string
+          scene_segment_id: string | null
+          shoot_day_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          banner_text?: string | null
+          created_at?: string
+          id?: string
+          ordinal?: number
+          project_id: string
+          scene_segment_id?: string | null
+          shoot_day_id: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          banner_text?: string | null
+          created_at?: string
+          id?: string
+          ordinal?: number
+          project_id?: string
+          scene_segment_id?: string | null
+          shoot_day_id?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strips_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "strips_scene_segment_id_fkey"
+            columns: ["scene_segment_id"]
+            isOneToOne: false
+            referencedRelation: "scene_segments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "strips_shoot_day_id_fkey"
+            columns: ["shoot_day_id"]
+            isOneToOne: false
+            referencedRelation: "shoot_days"
             referencedColumns: ["id"]
           },
         ]

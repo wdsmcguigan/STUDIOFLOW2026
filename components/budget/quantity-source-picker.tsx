@@ -243,8 +243,25 @@ export function QuantitySourcePicker({
             </Button>
           </form>
         ) : (
-          // Manual rate input
-          <form action={updateLineAction} className="flex items-center gap-2">
+          // Manual rate input.
+          // When the user sets a manual rate we must also clear any previously stored
+          // rate_global_id — otherwise the engine keeps using the global even though
+          // the UI shows the manual field. We do this by calling setLineRateGlobalAction
+          // with an empty rateGlobalId (empty string → undefined → null in the action)
+          // alongside updateLineAction.
+          <form
+            action={async (fd: FormData) => {
+              // 1. Clear the global rate binding (empty rateGlobalId → null in DB).
+              const clearFd = new FormData();
+              clearFd.set("projectId", projectId);
+              clearFd.set("lineId", lineId);
+              // rateGlobalId intentionally omitted → action treats as undefined → null
+              await setLineRateGlobalAction(clearFd);
+              // 2. Persist the manual rate.
+              await updateLineAction(fd);
+            }}
+            className="flex items-center gap-2"
+          >
             <input type="hidden" name="projectId" value={projectId} />
             <input type="hidden" name="id" value={lineId} />
             <input

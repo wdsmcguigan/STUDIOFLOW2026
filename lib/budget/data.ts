@@ -439,9 +439,26 @@ export async function setLineFringes(
 /**
  * Add an actuals cost entry to the append-only ledger.
  * A correction must be a new offsetting entry (never update an existing row).
+ *
+ * Integrity guard: if lineId is provided, verifies the line belongs to the
+ * same budget as the entry (RLS guarantees same-owner but not same-budget).
  */
 export async function addCostEntry(client: DbClient, input: unknown): Promise<CostEntry> {
   const p = addCostEntryInput.parse(input);
+
+  // Intra-budget integrity: a line must belong to the same budget as the entry.
+  if (p.lineId !== null && p.lineId !== undefined) {
+    const { data: lineRow, error: lineErr } = await client
+      .from("budget_lines")
+      .select("budget_id")
+      .eq("id", p.lineId)
+      .single();
+    if (lineErr) throw new Error(lineErr.message, { cause: lineErr });
+    if (lineRow.budget_id !== p.budgetId) {
+      throw new Error("cost entry line does not belong to the target budget");
+    }
+  }
+
   const { data, error } = await client
     .from("cost_entries")
     .insert({
@@ -504,10 +521,9 @@ export async function setContingency(
  * Paid DOOD codes: Work-day codes + Hold + Travel.
  * Idle (I) and all other non-work codes are excluded.
  *
- * engine logic — freely revisable (no migration). Spec decision 4:
- * paid = Work + compound Work + Hold + Travel.
+ * // paid = work + start + finish + hold + travel; idle (I) excluded. Engine logic, freely revisable.
  */
-const PAID_DOOD_CODES = new Set(["W", "SW", "WF", "SWF", "H", "T"]);
+const PAID_DOOD_CODES = new Set(["W", "SW", "WF", "SWF", "H", "T", "S", "F"]);
 
 /**
  * Assemble the plain-data inputs the pure budget engine needs for one project.
@@ -725,13 +741,17 @@ export async function getBudget(client: DbClient, projectId: string): Promise<Bu
 // This is the single wiring point consumed by getTopSheet/getAccountDetail/getVariance.
 // ---------------------------------------------------------------------------
 
-async function _computeTopSheet(client: DbClient, projectId: string): Promise<TopSheet> {
-  // Load authored slice and derived inputs in parallel
-  const [bundle, derivedInputs] = await Promise.all([
-    getBudget(client, projectId),
-    loadBudgetDerivationInputs(client, projectId),
-  ]);
-
+/**
+ * Pure assembly: build engine lookup maps, compute per-line costs, run the rollup
+ * engine → TopSheet. NO DB access — takes the already-loaded bundle + derived inputs.
+ * Single source of truth for the engine pass, shared by _computeTopSheet (the
+ * per-read fns) and getBudgetPageData (the single-pass page loader) so the two
+ * cannot drift.
+ */
+function assembleTopSheet(
+  bundle: BudgetBundle,
+  derivedInputs: Awaited<ReturnType<typeof loadBudgetDerivationInputs>>,
+): TopSheet {
   const { budget: budgetRow, accounts, lines, globals, fringes, lineFringeIds } = bundle;
 
   // Build lookup maps for the engine
@@ -768,6 +788,15 @@ async function _computeTopSheet(client: DbClient, projectId: string): Promise<To
   // needs Section. We own both shapes — safe cast since the DB constrains to the enum values.
   const accountsTyped = accounts as Parameters<typeof computeRollups>[1];
   return computeRollups(lines, accountsTyped, costResultsByLine, { contingencyPercent, contingencyBasis }, budgetRow.id);
+}
+
+async function _computeTopSheet(client: DbClient, projectId: string): Promise<TopSheet> {
+  // Load authored slice and derived inputs in parallel, then run the shared engine pass.
+  const [bundle, derivedInputs] = await Promise.all([
+    getBudget(client, projectId),
+    loadBudgetDerivationInputs(client, projectId),
+  ]);
+  return assembleTopSheet(bundle, derivedInputs);
 }
 
 /**
@@ -815,4 +844,74 @@ export async function getVariance(client: DbClient, projectId: string): Promise<
   }));
 
   return computeVariance(topSheet, costEntryLikes);
+}
+
+// ---------------------------------------------------------------------------
+// Single-pass budget page data loader (Fix 3)
+// ---------------------------------------------------------------------------
+
+/**
+ * Shape returned by getBudgetPageData — everything the budget page needs in a
+ * single object assembled with ONE slice-load + ONE engine pass.
+ */
+export interface BudgetPageData {
+  budget: Budget;
+  bundle: BudgetBundle;
+  topSheet: TopSheet;
+  accountRollups: AccountRollup[];
+  variance: Variance;
+  costEntries: CostEntry[];
+}
+
+/**
+ * Load ALL data required by the budget page in a single database round-trip
+ * sequence: resolve/create the default budget ONCE, load the authored bundle
+ * and derivation inputs in parallel ONCE, run the engine ONCE, then assemble
+ * topSheet, accountRollups (flattened), variance, and cost entries.
+ *
+ * Replaces four separate getTopSheet + getAccountDetail + getBudget + getVariance
+ * calls that each repeated the same slice-load + engine pass internally.
+ *
+ * The existing exported functions (getTopSheet, getAccountDetail, getVariance,
+ * getBudget) are kept intact for other callers and tests.
+ */
+export async function getBudgetPageData(
+  client: DbClient,
+  projectId: string,
+): Promise<BudgetPageData> {
+  // 1. Load the authored bundle and derivation inputs in parallel.
+  //    getBudget internally calls getOrCreateDefaultBudget, so the budget is
+  //    resolved exactly once.
+  const [bundle, derivedInputs] = await Promise.all([
+    getBudget(client, projectId),
+    loadBudgetDerivationInputs(client, projectId),
+  ]);
+
+  const { budget: budgetRow } = bundle;
+
+  // 2-4. Run the shared engine pass ONCE (same helper the per-read fns use → no drift).
+  const topSheet = assembleTopSheet(bundle, derivedInputs);
+
+  // 5. Flatten account rollups across all sections (same shape getAccountDetail returns).
+  const accountRollups = topSheet.sections.flatMap((s) => s.accounts);
+
+  // 6. Load cost entries (needs budgetId — available from topSheet.budgetId or budgetRow.id).
+  const costEntries = await listCostEntries(client, budgetRow.id);
+
+  // 7. Derive variance from the already-computed topSheet.
+  const costEntryLikes = costEntries.map((e) => ({
+    account_id: e.account_id,
+    line_id: e.line_id,
+    amount: e.amount,
+  }));
+  const variance = computeVariance(topSheet, costEntryLikes);
+
+  return {
+    budget: budgetRow,
+    bundle,
+    topSheet,
+    accountRollups,
+    variance,
+    costEntries,
+  };
 }

@@ -12,14 +12,8 @@
 import type { AccountRollup, Section } from "@/lib/budget/schema";
 import type { Fringe } from "@/lib/budget/schema";
 import { LineRow } from "./line-row";
-import { formatCurrency } from "@/lib/budget/format";
-
-const SECTION_LABELS: Record<Section, string> = {
-  atl: "Above the Line",
-  btl: "Below the Line",
-  post: "Post-Production",
-  other: "Other",
-};
+import { formatCurrency, SECTION_LABELS } from "@/lib/budget/format";
+import { Card } from "@/components/ui/card";
 
 interface AccountDetailProps {
   /** All account rollups (from TopSheet.sections.flatMap(s => s.accounts)). */
@@ -74,9 +68,11 @@ export function AccountDetail({
 
           <div className="space-y-3">
             {sectionAccounts.map((account) => (
-              <div
+              // gap-0 py-0 neutralise Card's default flex-col/gap-4/py-4 so the
+              // account header + table layout is preserved.
+              <Card
                 key={account.accountId}
-                className="rounded-xl bg-card ring-1 ring-foreground/10 overflow-hidden"
+                className="gap-0 py-0"
               >
                 {/* Account header */}
                 <div className="flex items-center justify-between gap-3 px-4 py-3 bg-muted/40 border-b border-border">
@@ -162,7 +158,7 @@ export function AccountDetail({
                     </table>
                   </div>
                 )}
-              </div>
+              </Card>
             ))}
           </div>
         </section>

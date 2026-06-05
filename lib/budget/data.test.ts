@@ -426,6 +426,7 @@ import {
   getVariance,
   setLineQuantitySource,
   setLineRateGlobal,
+  getBudgetPageData,
 } from "@/lib/budget/data";
 
 describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("budget data layer (Task 5)", () => {
@@ -1525,3 +1526,236 @@ describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("budget engine wiring (T
     expect(acctv!.actual).toBeCloseTo(400, 5);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Fix 2: addCostEntry line↔budget integrity guard
+// ---------------------------------------------------------------------------
+
+describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)(
+  "addCostEntry line↔budget integrity guard (Fix 2)",
+  () => {
+    let alice: SupabaseClient<Database>;
+    // Budget A (project A)
+    let projectA: string;
+    let budgetAId: string;
+    let accountAId: string;
+    // Budget B (project B — same user, different budget)
+    let projectB: string;
+    let budgetBId: string;
+    let lineBId: string; // a line that belongs to budget B
+
+    beforeAll(async () => {
+      alice = await makeUser(`alice-guard-${globalThis.crypto.randomUUID()}@test.dev`);
+
+      // ── Project A: budget + account (no lines needed for the rejection test) ──
+      projectA = await newProject(alice);
+      const budgetA = await getOrCreateDefaultBudget(alice, projectA);
+      budgetAId = budgetA.id;
+
+      const accountA = await createAccount(alice, {
+        budgetId: budgetAId,
+        name: "Production A",
+        code: "A100",
+        section: "btl",
+        parentAccountId: null,
+        ordinal: 0,
+      });
+      accountAId = accountA.id;
+
+      // ── Project B: budget + account + line ────────────────────────────────────
+      projectB = await newProject(alice);
+      const budgetB = await getOrCreateDefaultBudget(alice, projectB);
+      budgetBId = budgetB.id;
+
+      const accountB = await createAccount(alice, {
+        budgetId: budgetBId,
+        name: "Production B",
+        code: "B100",
+        section: "btl",
+        parentAccountId: null,
+        ordinal: 0,
+      });
+
+      // Create a line in budget B
+      const lineB = await createLine(alice, {
+        budgetId: budgetBId,
+        accountId: accountB.id,
+        description: "Director (Budget B)",
+        quantity: 1,
+        rate: 50000,
+        unit: "flat",
+        quantitySource: null,
+        rateGlobalId: null,
+        ordinal: 0,
+      });
+      lineBId = lineB.id;
+    });
+
+    it("REJECTS a lineId that belongs to a different budget of the same user", async () => {
+      // Try to add a cost entry to budget A, but supply a lineId from budget B
+      await expect(
+        addCostEntry(alice, {
+          budgetId: budgetAId,
+          accountId: accountAId,
+          lineId: lineBId, // belongs to budget B — should throw
+          amount: 100,
+          entryDate: "2026-06-01",
+          note: "Cross-budget escape attempt",
+        }),
+      ).rejects.toThrow("cost entry line does not belong to the target budget");
+    });
+
+    it("ACCEPTS a lineId that belongs to the same budget", async () => {
+      // Create a line in budget A (same budget as the cost entry)
+      const lineA = await createLine(alice, {
+        budgetId: budgetAId,
+        accountId: accountAId,
+        description: "Director (Budget A)",
+        quantity: 1,
+        rate: 50000,
+        unit: "flat",
+        quantitySource: null,
+        rateGlobalId: null,
+        ordinal: 0,
+      });
+
+      // Should succeed: lineA belongs to budgetA
+      const entry = await addCostEntry(alice, {
+        budgetId: budgetAId,
+        accountId: accountAId,
+        lineId: lineA.id,
+        amount: 5000,
+        entryDate: "2026-06-01",
+        note: "Valid same-budget entry",
+      });
+      expect(entry.id).toBeTruthy();
+      expect(entry.amount).toBe(5000);
+      expect(entry.line_id).toBe(lineA.id);
+    });
+
+    it("ACCEPTS a cost entry with no lineId (line_id null is always valid)", async () => {
+      const entry = await addCostEntry(alice, {
+        budgetId: budgetAId,
+        accountId: accountAId,
+        lineId: null,
+        amount: 2500,
+        entryDate: "2026-06-02",
+        note: "No line — account-level entry",
+      });
+      expect(entry.id).toBeTruthy();
+      expect(entry.line_id).toBeNull();
+    });
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Fix 3: getBudgetPageData single-pass loader
+// ---------------------------------------------------------------------------
+
+describe.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)(
+  "getBudgetPageData single-pass loader (Fix 3)",
+  () => {
+    let alice: SupabaseClient<Database>;
+    let aliceProject: string;
+
+    // Budget-layer ids (reuse Task-10 wiring setup pattern)
+    let budgetId: string;
+    let accountId: string;
+    let manualLineId: string; // qty=3, rate=100 → base=300
+    let fringeId: string;     // percent=0.10
+
+    beforeAll(async () => {
+      alice = await makeUser(`alice-pagedata-${globalThis.crypto.randomUUID()}@test.dev`);
+      aliceProject = await newProject(alice);
+
+      const budgetRow = await getOrCreateDefaultBudget(alice, aliceProject);
+      budgetId = budgetRow.id;
+
+      // Seed the default chart so accountRollups is non-empty
+      await seedDefaultChart(alice, budgetId);
+
+      // Create a single account + line for numeric assertions
+      const account = await createAccount(alice, {
+        budgetId,
+        name: "Talent",
+        code: "N100",
+        section: "atl",
+        parentAccountId: null,
+        ordinal: 0,
+      });
+      accountId = account.id;
+
+      const fringeRow = await createFringe(alice, {
+        budgetId,
+        name: "P&H",
+        percent: 0.10,
+      });
+      fringeId = fringeRow.id;
+
+      const manualLine = await createLine(alice, {
+        budgetId,
+        accountId,
+        description: "Manual Test Line",
+        quantity: 3,
+        rate: 100,
+        unit: "day",
+        quantitySource: null,
+        rateGlobalId: null,
+        ordinal: 0,
+      });
+      manualLineId = manualLine.id;
+      await setLineFringes(alice, manualLineId, [fringeId]);
+
+      // Add a cost entry: $150 actual
+      await addCostEntry(alice, {
+        budgetId,
+        accountId,
+        lineId: manualLineId,
+        amount: 150,
+        entryDate: "2026-06-01",
+        note: "Test actual",
+      });
+    });
+
+    it("returns a coherent bundle with topSheet.grandTotal matching manual calculation", async () => {
+      const pageData = await getBudgetPageData(alice, aliceProject);
+
+      // ── budget identity ───────────────────────────────────────────────────────
+      expect(pageData.budget.id).toBe(budgetId);
+      expect(pageData.bundle.budget.id).toBe(budgetId);
+
+      // ── topSheet: base = 3×100 = 300, fringe = 300×0.10 = 30, grand = 330 ──
+      expect(pageData.topSheet.budgetId).toBe(budgetId);
+      expect(pageData.topSheet.subtotal).toBeCloseTo(300, 5);
+      expect(pageData.topSheet.fringeTotalSum).toBeCloseTo(30, 5);
+      expect(pageData.topSheet.grandTotal).toBeCloseTo(330, 5);
+
+      // ── accountRollups: non-empty (seeded chart + our account) ────────────────
+      expect(pageData.accountRollups.length).toBeGreaterThan(0);
+      const rollup = pageData.accountRollups.find((a) => a.accountId === accountId);
+      expect(rollup).toBeDefined();
+      expect(rollup!.lines.some((l) => l.lineId === manualLineId)).toBe(true);
+
+      // ── variance: estimate = 330, actual = 150, variance = 180 ───────────────
+      expect(pageData.variance.budgetId).toBe(budgetId);
+      expect(pageData.variance.budget.estimate).toBeCloseTo(330, 5);
+      expect(pageData.variance.budget.actual).toBeCloseTo(150, 5);
+      expect(pageData.variance.budget.variance).toBeCloseTo(180, 5);
+
+      // ── costEntries: at least the one we seeded ───────────────────────────────
+      expect(pageData.costEntries.length).toBeGreaterThanOrEqual(1);
+      expect(pageData.costEntries.some((e) => e.amount === 150)).toBe(true);
+    });
+
+    it("topSheet.grandTotal from getBudgetPageData matches getTopSheet for the same project", async () => {
+      // Cross-check: the single-pass result must match what the individual
+      // function returns (same engine, same data).
+      const [pageData, directTopSheet] = await Promise.all([
+        getBudgetPageData(alice, aliceProject),
+        getTopSheet(alice, aliceProject),
+      ]);
+      expect(pageData.topSheet.grandTotal).toBeCloseTo(directTopSheet.grandTotal, 5);
+      expect(pageData.topSheet.subtotal).toBeCloseTo(directTopSheet.subtotal, 5);
+    });
+  },
+);

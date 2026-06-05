@@ -12,14 +12,8 @@
 
 import type { TopSheet as TopSheetData } from "@/lib/budget/schema";
 import type { Fringe } from "@/lib/budget/schema";
-import { formatCurrency } from "@/lib/budget/format";
-
-const SECTION_LABELS: Record<string, string> = {
-  atl: "Above the Line",
-  btl: "Below the Line",
-  post: "Post-Production",
-  other: "Other",
-};
+import { formatCurrency, SECTION_LABELS } from "@/lib/budget/format";
+import { Card } from "@/components/ui/card";
 
 interface TopSheetProps {
   topSheet: TopSheetData;
@@ -56,7 +50,9 @@ export function TopSheet({ topSheet, fringes }: TopSheetProps) {
   );
 
   return (
-    <div className="rounded-xl bg-card ring-1 ring-foreground/10 overflow-hidden">
+    // gap-0 py-0 neutralise Card's default flex-col/gap-4/py-4 so the hand-crafted
+    // header + body layout is preserved while Card supplies the shared visual shell.
+    <Card className="gap-0 py-0">
       {/* Card header */}
       <div className="flex items-center justify-between gap-4 border-b border-border px-6 py-4">
         <div className="space-y-0.5">
@@ -161,6 +157,6 @@ export function TopSheet({ topSheet, fringes }: TopSheetProps) {
           </tbody>
         </table>
       </div>
-    </div>
+    </Card>
   );
 }

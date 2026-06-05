@@ -5,6 +5,8 @@
  * These functions are safe to call on both server and client (no DOM deps).
  */
 
+import type { Section } from "@/lib/budget/schema";
+
 const USD = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -19,3 +21,14 @@ const USD = new Intl.NumberFormat("en-US", {
 export function formatCurrency(value: number): string {
   return USD.format(value);
 }
+
+/**
+ * Human-readable display names for the four budget sections.
+ * Typed against the Section enum so a schema change surfaces as a compile error.
+ */
+export const SECTION_LABELS: Record<Section, string> = {
+  atl: "Above the Line",
+  btl: "Below the Line",
+  post: "Post-Production",
+  other: "Other",
+};

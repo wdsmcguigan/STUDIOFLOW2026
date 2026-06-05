@@ -1,11 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import {
-  getOrCreateDefaultBudget,
-  getTopSheet,
-  getAccountDetail,
-  getBudget,
-  getVariance,
-  listCostEntries,
+  getBudgetPageData,
 } from "@/lib/budget/data";
 import {
   listElementCategories,
@@ -55,26 +50,17 @@ export default async function BudgetPage({
   const { projectId } = await params;
   const supabase = await createClient();
 
-  // Ensure a default budget exists (idempotent get-or-create).
-  const budgetRow = await getOrCreateDefaultBudget(supabase as never, projectId);
+  // Single-pass load: resolves the default budget + runs the engine exactly once.
+  // Loads breakdown taxonomy in parallel (independent of the budget slice).
+  const [pageData, categories, departments, people] = await Promise.all([
+    getBudgetPageData(supabase as never, projectId),
+    listElementCategories(supabase as never, projectId),
+    listDepartments(supabase as never, projectId),
+    listPeople(supabase as never, projectId),
+  ]);
+
+  const { budget: budgetRow, bundle, topSheet, accountRollups, variance: varianceReport, costEntries: costEntryList } = pageData;
   const budgetId = budgetRow.id;
-
-  // Load derived top sheet, account rollups, raw bundle, breakdown taxonomy,
-  // variance report, and cost entries in parallel.
-  // getBudget also loads fringes/lines/globals.
-  const [topSheet, accountRollups, bundle, categories, departments, people, varianceReport, costEntryList] =
-    await Promise.all([
-      getTopSheet(supabase as never, projectId),
-      getAccountDetail(supabase as never, projectId),
-      getBudget(supabase as never, projectId),
-      listElementCategories(supabase as never, projectId),
-      listDepartments(supabase as never, projectId),
-      listPeople(supabase as never, projectId),
-      getVariance(supabase as never, projectId),
-      // listCostEntries needs budgetId — must be loaded after getOrCreateDefaultBudget
-      listCostEntries(supabase as never, budgetId),
-    ]);
-
   const { fringes, lines, globals, lineFringeIds } = bundle;
 
   // Empty-chart guard: if no accounts, render seed affordance.

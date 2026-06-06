@@ -59,8 +59,9 @@ interface NavGroup {
 
 /**
  * Phase-ordered groups (Develop → Plan → Shoot…).
- * Only "Script" has a live route in this slice. All others are `soon: true` stubs —
- * they render as disabled items and do NOT create routes (those ship in their phases).
+ * Script, Breakdown, Schedule, Budget, and Call Sheets are live (Phases 1–5).
+ * `soon: true` marks a module whose route has not shipped yet (future phases);
+ * such items render disabled and are not clickable.
  */
 const GROUPS: NavGroup[] = [
   {
@@ -68,13 +69,13 @@ const GROUPS: NavGroup[] = [
     appendAI: true,
     items: [
       { href: "scripts", label: "Script", icon: FileText },
-      { href: "breakdown", label: "Breakdown", icon: LayoutList, soon: true },
+      { href: "breakdown", label: "Breakdown", icon: LayoutList },
     ],
   },
   {
     label: "Plan",
     items: [
-      { href: "schedule", label: "Schedule", icon: CalendarDays, soon: true },
+      { href: "schedule", label: "Schedule", icon: CalendarDays },
       { href: "budget", label: "Budget", icon: DollarSign },
       { href: "callsheets", label: "Call Sheets", icon: ClipboardList },
     ],

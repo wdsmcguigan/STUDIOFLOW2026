@@ -271,6 +271,110 @@ export type Database = {
           },
         ]
       }
+      call_sheets: {
+        Row: {
+          created_at: string
+          general_call_time: string | null
+          hospital_address: string | null
+          hospital_name: string | null
+          id: string
+          notes: string | null
+          published_at: string | null
+          revision: number
+          shoot_day_id: string
+          updated_at: string
+          weather_note: string | null
+        }
+        Insert: {
+          created_at?: string
+          general_call_time?: string | null
+          hospital_address?: string | null
+          hospital_name?: string | null
+          id?: string
+          notes?: string | null
+          published_at?: string | null
+          revision?: number
+          shoot_day_id: string
+          updated_at?: string
+          weather_note?: string | null
+        }
+        Update: {
+          created_at?: string
+          general_call_time?: string | null
+          hospital_address?: string | null
+          hospital_name?: string | null
+          id?: string
+          notes?: string | null
+          published_at?: string | null
+          revision?: number
+          shoot_day_id?: string
+          updated_at?: string
+          weather_note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_sheets_shoot_day_id_fkey"
+            columns: ["shoot_day_id"]
+            isOneToOne: true
+            referencedRelation: "shoot_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cast_day_calls: {
+        Row: {
+          call_time: string | null
+          created_at: string
+          id: string
+          makeup_time: string | null
+          notes: string | null
+          on_set_time: string | null
+          person_id: string
+          shoot_day_id: string
+          updated_at: string
+          wardrobe_time: string | null
+        }
+        Insert: {
+          call_time?: string | null
+          created_at?: string
+          id?: string
+          makeup_time?: string | null
+          notes?: string | null
+          on_set_time?: string | null
+          person_id: string
+          shoot_day_id: string
+          updated_at?: string
+          wardrobe_time?: string | null
+        }
+        Update: {
+          call_time?: string | null
+          created_at?: string
+          id?: string
+          makeup_time?: string | null
+          notes?: string | null
+          on_set_time?: string | null
+          person_id?: string
+          shoot_day_id?: string
+          updated_at?: string
+          wardrobe_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cast_day_calls_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cast_day_calls_shoot_day_id_fkey"
+            columns: ["shoot_day_id"]
+            isOneToOne: false
+            referencedRelation: "shoot_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cast_day_statuses: {
         Row: {
           created_at: string
@@ -424,6 +528,143 @@ export type Database = {
             columns: ["line_id"]
             isOneToOne: false
             referencedRelation: "budget_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crew_day_calls: {
+        Row: {
+          call_time: string | null
+          created_at: string
+          crew_member_id: string
+          id: string
+          shoot_day_id: string
+          updated_at: string
+        }
+        Insert: {
+          call_time?: string | null
+          created_at?: string
+          crew_member_id: string
+          id?: string
+          shoot_day_id: string
+          updated_at?: string
+        }
+        Update: {
+          call_time?: string | null
+          created_at?: string
+          crew_member_id?: string
+          id?: string
+          shoot_day_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_day_calls_crew_member_id_fkey"
+            columns: ["crew_member_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crew_day_calls_shoot_day_id_fkey"
+            columns: ["shoot_day_id"]
+            isOneToOne: false
+            referencedRelation: "shoot_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crew_dept_calls: {
+        Row: {
+          call_time: string
+          created_at: string
+          department: string
+          id: string
+          shoot_day_id: string
+          updated_at: string
+        }
+        Insert: {
+          call_time: string
+          created_at?: string
+          department: string
+          id?: string
+          shoot_day_id: string
+          updated_at?: string
+        }
+        Update: {
+          call_time?: string
+          created_at?: string
+          department?: string
+          id?: string
+          shoot_day_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_dept_calls_shoot_day_id_fkey"
+            columns: ["shoot_day_id"]
+            isOneToOne: false
+            referencedRelation: "shoot_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crew_members: {
+        Row: {
+          created_at: string
+          day_rate: number | null
+          department: string
+          email: string | null
+          id: string
+          name: string
+          ordinal: number
+          person_id: string | null
+          phone: string | null
+          position: string
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_rate?: number | null
+          department?: string
+          email?: string | null
+          id?: string
+          name: string
+          ordinal?: number
+          person_id?: string | null
+          phone?: string | null
+          position?: string
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_rate?: number | null
+          department?: string
+          email?: string | null
+          id?: string
+          name?: string
+          ordinal?: number
+          person_id?: string | null
+          phone?: string | null
+          position?: string
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_members_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crew_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]

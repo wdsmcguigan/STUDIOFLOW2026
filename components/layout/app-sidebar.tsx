@@ -19,6 +19,7 @@ import { usePathname } from "next/navigation";
 import {
   FileText,
   LayoutList,
+  Clapperboard,
   CalendarDays,
   DollarSign,
   ClipboardList,
@@ -70,6 +71,7 @@ const GROUPS: NavGroup[] = [
     items: [
       { href: "scripts", label: "Script", icon: FileText },
       { href: "breakdown", label: "Breakdown", icon: LayoutList },
+      { href: "storyboard", label: "Storyboard", icon: Clapperboard },
     ],
   },
   {

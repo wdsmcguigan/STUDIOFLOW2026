@@ -1,0 +1,34 @@
+# Storyboard — Research Companion
+
+> **Status:** Research notes (deep-research harness, 2026-06-06; 25 sources fetched, 113 claims, 24 confirmed / 1 killed via 3-vote adversarial verification).
+> **Companion to:** `2026-06-06-studioflow-storyboard-design.md`. Findings here are folded into that spec's engine section + Open Questions; this doc keeps the citations and the verbatim templates.
+
+## Verified findings (high confidence)
+
+### Generative engine — Gemini 2.5 Flash Image ("Nano Banana")
+1. **Native cross-panel consistency, no fine-tuning.** The model places the same character/subject into different environments while preserving identity — built-in, no IP-Adapter/LoRA. ([Google dev blog](https://developers.googleblog.com/en/introducing-gemini-2-5-flash-image/), [Vertex AI](https://cloud.google.com/blog/products/ai-machine-learning/gemini-2-5-flash-image-on-vertex-ai), [Gemini API docs](https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash-image))
+2. **Native multi-image fusion.** Accepts/merges multiple reference images in one prompt → our "locked character + location plates" approach works directly. Up to ~14 refs; **~6 for high fidelity** (some sources cite ~3 for reliable photoreal fusion). → cap `selectConditioningRefs` to principal characters + the location.
+3. **Consistency is best-effort, NOT pixel-perfect.** Features drift over long iterative-edit chains; clothing/angle changes can degrade facial identity. Google's fix: restart from a detailed description. **Architecture implication (load-bearing):** render each panel **independently**, conditioned on the *locked plates* — do **not** chain panels as one long edit conversation. Keep human curation + re-roll on drift. Don't promise pixel-perfect locking. ([prompting guide](https://developers.googleblog.com/en/how-to-prompt-gemini-2-5-flash-image-generation-for-the-best-results/))
+
+### Integration — Vercel AI SDK + AI Gateway (code-level, current)
+4. **🔴 Gemini is a multimodal LLM → use `generateText` (or `streamText`), NOT `generateImage`/`experimental_generateImage`.** Generated images come back in **`result.files`** (parts with `uint8Array`/`mediaType`); `result.text` may also be set. ([AI SDK cookbook](https://ai-sdk.dev/cookbook/guides/google-gemini-image-generation), [AI Gateway image docs](https://vercel.com/docs/ai-gateway/capabilities/image-generation/ai-sdk))
+5. **Two return shapes the `ImageEngine` must abstract:**
+   - *Multimodal (Gemini):* `generateText({ model, messages })` → `result.files`.
+   - *Image-only (Imagen/Flux/gpt-image/Grok):* `import { experimental_generateImage as generateImage } from 'ai'` → `generateImage({ model, prompt, n, aspectRatio })` → `result.images[].base64/.mediaType`.
+6. **AI Gateway routing = bare `provider/model` string** as the `model` field — no client wrapper, no `gateway()` call (works `ai` ≥ v5.0.36). Confirms our config-string, swappable-provider design.
+7. **Reference images** are passed inside the `messages` content array as `{ type: 'image', image: DataContent, mediaType: 'image/jpeg' }`, where `image` accepts `string | Uint8Array | ArrayBuffer | Buffer | URL`. **A `new URL(<supabase signed url>)` feeds in directly** — locked plates → signed URL → content part. ([generateText ref](https://ai-sdk.dev/docs/reference/ai-sdk-core/generate-text))
+8. **Model ids (time-sensitive, post-cutoff — verify at impl):** current AI-Gateway id is **`google/gemini-2.5-flash-image`** (the `-preview` suffix was dropped; that page now 404s). As of 2026-05-11 docs it's the "older generation"; newer same-call-shape variants: **`google/gemini-3.1-flash-image-preview`** (Nano Banana 2) and **`google/gemini-3-pro-image`** (Nano Banana Pro). → default via config, one-line upgrade. ([Gateway model page](https://vercel.com/ai-gateway/models/gemini-3-pro-image))
+9. **Output size caveat:** Gemini image outputs are compressed (~100–200 KB). Fine on-screen; **confirm resolution suffices for print-quality PDF export** (may need a higher tier or upscale step). 
+
+### Scene → shot list (LLM decomposition)
+10. **ShotBench taxonomy** = an enumerable controlled vocabulary for the structured-output schema: 8 dims — *shot size, shot framing, camera angle, lens size, lighting type, lighting condition, composition, camera movement* — each with professional labels (e.g. Shot Size {ECU, CU, MCU, Medium, MW, Wide, EW}; Movement {Static, Pan, Tilt, Push in, Pull out, Zoom, Arc, Dolly, Boom, Dolly-zoom}; Angle {Eye, Low, High, Overhead, Aerial, Dutch}). Map each to a Zod enum. **Caveat:** ShotBench is a VLM *recognition* benchmark (not a generation schema) and is **camera-only — no subject action** → keep our free-text `action` field. ([ShotBench arXiv](https://arxiv.org/html/2506.21356v2), [project](https://vchitect.github.io/ShotBench-project))
+11. **Google's verbatim comic-panel/storyboard prompt template** (use per panel): *"A single comic book panel in a **[art style]** style. In the foreground, **[character description and action]**. In the background, **[setting details]**. The panel has a **[dialogue/caption box]** with the text "[Text]". The lighting creates a **[mood]** mood. **[Aspect ratio]**."* → fold shotlist fields (size/angle/movement/action) into the foreground/composition slots; attach locked plates as image parts; `[art style]`/`[aspect ratio]` come from `project_visual_settings`. ([prompting guide](https://developers.googleblog.com/en/how-to-prompt-gemini-2-5-flash-image-generation-for-the-best-results/))
+
+## Refuted / killed
+- ❌ "Model id is `gemini-2.5-flash-image-preview`" — **0-3 refuted**; the `-preview` suffix was dropped (GA id is `gemini-2.5-flash-image`).
+
+## Still open — consult primary docs at plan time (no surviving verified claims; sources fetched but dropped under the verification budget)
+- **Supabase Storage:** private-bucket RLS on `storage.objects` keyed by a `project_id` path prefix; `createSignedUrl` usage/expiry. → [access-control](https://supabase.com/docs/guides/storage/security/access-control), [storage helper fns](https://supabase.com/docs/guides/storage/schema/helper-functions), [createSignedUrl](https://supabase.com/docs/reference/javascript/storage-from-createsignedurl).
+- **dnd-kit** reorderable grid (sortable preset, array move, drag overlay, keyboard a11y). → [sortable preset](https://docs.dndkit.com/presets/sortable).
+- **@react-pdf/renderer** image-heavy layouts w/ remote/signed-URL images (note: a known issue around remote images — [react-pdf#929](https://github.com/diegomura/react-pdf/issues/929)). → [components](https://react-pdf.org/components).
+- **Competitive UX teardown** (Filmustage, LTX Studio, Katalist, Boords, StudioBinder, Storyboarder/Storyboard Pro) — boarding UX, consistency approaches, pitfalls. → [Katalist (OSS ref)](https://github.com/aginyx/katalist), [Boords AI](https://boords.com/ai-storyboard-generator).

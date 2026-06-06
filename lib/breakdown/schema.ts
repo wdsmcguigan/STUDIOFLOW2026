@@ -6,7 +6,12 @@ export const tagStatus = z.enum(["suggested", "confirmed", "rejected"]);
 export const anchorState = z.enum(["anchored", "needs_review", "orphaned"]);
 export const presenceType = z.enum(["speaking", "silent_featured", "background", "voice_only"]);
 export const orgType = z.enum(["production_company", "agency", "vendor", "payroll", "insurer", "other"]);
-export const jobType = z.enum(["breakdown", "import"]);
+export const jobType = z.enum([
+  "breakdown",
+  "import",
+  "storyboard_render",
+  "storyboard_reference",
+]);
 export const jobStatus = z.enum(["queued", "running", "succeeded", "failed", "cancelled"]);
 
 // ---- text_anchor: robust quote + context ----------------------------------

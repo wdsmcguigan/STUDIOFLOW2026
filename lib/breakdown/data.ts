@@ -499,7 +499,7 @@ export async function createJob(
   client: DbClient,
   args: {
     projectId: string;
-    type: "breakdown" | "import";
+    type: "breakdown" | "import" | "storyboard_render" | "storyboard_reference";
     params?: Record<string, unknown>;
     total?: number | null;
     createdBy: string;
@@ -603,4 +603,103 @@ export async function listScenesForBreakdown(
       "\n" +
       (s.synopsis ?? ""),
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Scene header read (for storyboard render inputs) — resolves the scene's
+// set → location chain so callers can map to a location_id / location name.
+// ---------------------------------------------------------------------------
+
+/** A scene's header fields plus its resolved location (via set_id → sets.location_id). */
+export interface SceneHeader {
+  id: string;
+  project_id: string;
+  int_ext: string | null;
+  time_of_day: string | null;
+  location_slug: string | null;
+  synopsis: string | null;
+  set_id: string | null;
+  /** Resolved location id (sets.location_id), null if no set or set has no location. */
+  location_id: string | null;
+  /** Resolved location name (locations.name), null if unresolved. */
+  location_name: string | null;
+}
+
+/**
+ * Load a single scene's header + resolved location.
+ *
+ * The scene's location is resolved through set_id → sets.location_id → locations.
+ * location_slug is the script's human-facing header text; location_id is the
+ * stable FK used to match locked visual references.
+ */
+export async function getSceneHeader(
+  client: DbClient,
+  sceneId: string,
+): Promise<SceneHeader | null> {
+  const { data, error } = await client
+    .from("scenes")
+    .select(
+      "id, project_id, int_ext, time_of_day, location_slug, synopsis, set_id, sets(location_id, locations(id, name))",
+    )
+    .eq("id", sceneId)
+    .maybeSingle();
+  if (error) throw new Error(error.message, { cause: error });
+  if (!data) return null;
+
+  // sets is a to-one embed (set_id FK); locations is a to-one embed under it.
+  const set = (data as { sets?: { location_id: string | null; locations?: { id: string; name: string } | null } | null })
+    .sets;
+  const loc = set?.locations ?? null;
+
+  return {
+    id: data.id,
+    project_id: data.project_id,
+    int_ext: data.int_ext,
+    time_of_day: data.time_of_day,
+    location_slug: data.location_slug,
+    synopsis: data.synopsis,
+    set_id: data.set_id,
+    location_id: loc?.id ?? set?.location_id ?? null,
+    location_name: loc?.name ?? data.location_slug ?? null,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Scene characters (confirmed presence) — reused by storyboard render inputs.
+// ---------------------------------------------------------------------------
+
+/** A confirmed character present in a scene: the link id, the character id, and the name. */
+export interface SceneCharacterPresence {
+  /** scene_characters row id. */
+  id: string;
+  /** characters.id — the stable identity used to match locked refs. */
+  character_id: string;
+  /** characters.primary_name. */
+  name: string;
+}
+
+/**
+ * List the confirmed characters present in a scene (joined to characters for the name).
+ *
+ * Only status='confirmed' links are returned — mirrors the downstream gate in
+ * listConfirmedSceneTags: suggested/rejected presence is invisible to consumers.
+ */
+export async function listSceneCharacters(
+  client: DbClient,
+  sceneId: string,
+): Promise<SceneCharacterPresence[]> {
+  const { data, error } = await client
+    .from("scene_characters")
+    .select("id, character_id, characters(primary_name)")
+    .eq("scene_id", sceneId)
+    .eq("status", "confirmed");
+  if (error) throw new Error(error.message, { cause: error });
+  return (data ?? []).map((r) => {
+    const ch = (r as { characters?: { primary_name: string } | null }).characters;
+    return {
+      id: r.id as string,
+      character_id: r.character_id as string,
+      name: ch?.primary_name ?? "",
+    };
+  });
 }

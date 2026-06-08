@@ -14,7 +14,11 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const projects = await listProjects();
+  const [active, archived, trashed] = await Promise.all([
+    listProjects(supabase as never, "active"),
+    listProjects(supabase as never, "archived"),
+    listProjects(supabase as never, "trashed"),
+  ]);
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -79,10 +83,39 @@ export default async function DashboardPage() {
           <CreateProjectForm action={createProjectAction} />
         </section>
 
-        {/* Project list */}
+        {/* Active projects */}
         <section aria-label="Your projects">
-          <ProjectList projects={projects} />
+          <ProjectList projects={active} scope="active" />
         </section>
+
+        {/* Archived — shelved out of the main list, still openable */}
+        {archived.length > 0 && (
+          <section aria-label="Archived projects">
+            <h2
+              className="mb-3 text-sm font-bold tracking-[-0.2px]"
+              style={{ fontFamily: "var(--font-display)", color: "var(--tx-2)" }}
+            >
+              Archived
+            </h2>
+            <ProjectList projects={archived} scope="archived" />
+          </section>
+        )}
+
+        {/* Trash — soft-deleted; restore or permanently delete */}
+        {trashed.length > 0 && (
+          <section aria-label="Trash">
+            <h2
+              className="mb-1 text-sm font-bold tracking-[-0.2px]"
+              style={{ fontFamily: "var(--font-display)", color: "var(--tx-2)" }}
+            >
+              Trash
+            </h2>
+            <p className="mb-3 text-xs" style={{ color: "var(--tx-2)" }}>
+              Deleted projects stay here until you restore or permanently delete them.
+            </p>
+            <ProjectList projects={trashed} scope="trashed" />
+          </section>
+        )}
       </main>
     </div>
   );

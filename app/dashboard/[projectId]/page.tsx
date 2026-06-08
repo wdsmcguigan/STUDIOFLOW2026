@@ -25,8 +25,8 @@ export default async function ProjectPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const project = await getProject(projectId);
-  if (!project) notFound();
+  const project = await getProject(supabase as never, projectId);
+  if (!project || project.deleted_at) notFound();
 
   return (
     <>

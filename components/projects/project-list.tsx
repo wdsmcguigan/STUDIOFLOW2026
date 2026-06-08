@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Project } from "@/lib/projects/schema";
+import type { Project, ProjectScope } from "@/lib/projects/schema";
+import { ProjectActionsMenu } from "@/components/projects/project-actions-menu";
 
 /**
  * Map a project status string to a Badge variant + display label.
@@ -24,14 +25,24 @@ function statusBadge(status: string): { label: string; variant: "default" | "sec
   }
 }
 
-export function ProjectList({ projects }: { projects: Project[] }) {
+export function ProjectList({
+  projects,
+  scope = "active",
+  emptyMessage = "No projects yet. Create your first above.",
+}: {
+  projects: Project[];
+  scope?: ProjectScope;
+  emptyMessage?: string;
+}) {
   if (projects.length === 0) {
     return (
       <p style={{ color: "var(--tx-2)" }} className="text-sm">
-        No projects yet. Create your first above.
+        {emptyMessage}
       </p>
     );
   }
+
+  const trashed = scope === "trashed";
 
   return (
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -39,45 +50,50 @@ export function ProjectList({ projects }: { projects: Project[] }) {
         const { label, variant } = statusBadge(p.status);
         return (
           <li key={p.id} className="flex flex-col gap-1.5">
-            {/*
-              Link wraps only the card — "Import script" is a sibling element.
-              No nested anchors. The card is the project workspace target.
-            */}
-            <Link
-              href={`/dashboard/${p.id}`}
-              className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-1"
-              aria-label={`Open ${p.title}`}
+            <Card
+              className="relative p-4 transition-colors"
+              style={{
+                background: "var(--s2)",
+                borderColor: "var(--line-2)",
+                opacity: trashed ? 0.7 : undefined,
+              }}
             >
-              <Card
-                className="p-4 transition-colors"
-                style={{
-                  background: "var(--s2)",
-                  borderColor: "var(--line-2)",
-                }}
-                // hover handled via Tailwind data-attribute; fall back to inline for token
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <h3
-                    className="text-sm font-bold leading-snug tracking-[-0.2px]"
-                    style={{ fontFamily: "var(--font-display)", color: "var(--tx)" }}
-                  >
-                    {p.title}
-                  </h3>
-                  <Badge variant={variant} className="shrink-0">
-                    {label}
-                  </Badge>
+              {/*
+                Overlay link fills the card so the whole surface opens the project,
+                without nesting the actions menu inside an anchor. Trashed projects
+                are not openable (their workspace 404s until restored), so no link.
+              */}
+              {!trashed && (
+                <Link
+                  href={`/dashboard/${p.id}`}
+                  className="absolute inset-0 z-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-1"
+                  aria-label={`Open ${p.title}`}
+                />
+              )}
+              <div className="pointer-events-none relative z-10 flex items-start justify-between gap-2">
+                <h3
+                  className="text-sm font-bold leading-snug tracking-[-0.2px]"
+                  style={{ fontFamily: "var(--font-display)", color: "var(--tx)" }}
+                >
+                  {p.title}
+                </h3>
+                <div className="pointer-events-auto flex shrink-0 items-center gap-1">
+                  <Badge variant={variant}>{label}</Badge>
+                  <ProjectActionsMenu project={p} scope={scope} />
                 </div>
-              </Card>
-            </Link>
+              </div>
+            </Card>
 
-            {/* Sibling link — not nested inside the project card anchor */}
-            <a
-              href={`/dashboard/${p.id}/import`}
-              className="ml-1 text-xs underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-              style={{ color: "var(--brand-on)" }}
-            >
-              Import script
-            </a>
+            {!trashed && (
+              /* Sibling link — not nested inside the project card anchor */
+              <a
+                href={`/dashboard/${p.id}/import`}
+                className="ml-1 text-xs underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+                style={{ color: "var(--brand-on)" }}
+              >
+                Import script
+              </a>
+            )}
           </li>
         );
       })}

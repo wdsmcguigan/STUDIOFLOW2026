@@ -3,9 +3,11 @@ import {
   SidebarInset,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { notFound } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { CommandPalette } from "@/components/layout/command-palette";
-import { listProjects } from "@/lib/projects/data";
+import { createClient } from "@/lib/supabase/server";
+import { getProject, listProjects } from "@/lib/projects/data";
 
 /**
  * Project-scoped shell — wraps all /dashboard/[projectId]/** routes.
@@ -30,7 +32,14 @@ export default async function ProjectLayout({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
-  const projects = await listProjects();
+  const supabase = await createClient();
+
+  // Trashed projects are not reachable; their workspace 404s until restored.
+  // (Archived projects stay openable — archiving only shelves them from the list.)
+  const current = await getProject(supabase as never, projectId);
+  if (!current || current.deleted_at) notFound();
+
+  const projects = await listProjects(supabase as never, "active");
 
   return (
     <SidebarProvider>
